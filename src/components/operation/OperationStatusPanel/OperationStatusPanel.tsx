@@ -65,8 +65,7 @@ export function OperationStatusPanel() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const scrollRemainderRef = useRef(0)
-  const { updateTime, columns, devices, metricColors, warningColor, abnormalThreshold } =
-    operationStatusMock
+  const { columns, devices, metricColors, warningColor, abnormalThreshold } = operationStatusMock
   const loopDevices = [...devices, ...devices]
 
   useEffect(() => {
@@ -103,8 +102,6 @@ export function OperationStatusPanel() {
 
   return (
     <div className={styles.panel}>
-      <p className={styles.updateTime}>更新时间：{updateTime}</p>
-
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>

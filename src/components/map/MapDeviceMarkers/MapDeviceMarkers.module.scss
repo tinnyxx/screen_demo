@@ -1,0 +1,37 @@
+$marker-width: calc(88 * 100vw / #{$design-width});
+
+/* 中心地图区域 — 左右栏与顶栏、底栏之间 */
+.centerArea {
+  position: absolute;
+  left: $column-width;
+  right: $column-width;
+  top: $header-height;
+  bottom: calc(#{$page-margin-bottom} + #{$bottom-stats-height});
+  z-index: 5;
+  pointer-events: none;
+}
+
+.marker {
+  position: absolute;
+  width: $marker-width;
+}
+
+.icon {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.label {
+  position: absolute;
+  top: calc(12% - 5px);
+  left: 0;
+  right: 0;
+  z-index: 1;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+  color: #ffffff;
+  text-align: center;
+  white-space: nowrap;
+}

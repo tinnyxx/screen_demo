@@ -1,0 +1,86 @@
+/* 核心数据展示卡片内容区 */
+.panel {
+  position: absolute;
+  top: $card-header-height;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.columns {
+  position: absolute;
+  top: 10px;
+  left: 30px;
+  right: 10px;
+  bottom: 10px;
+}
+
+.column {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 33.333%;
+}
+
+.column:first-child {
+  padding-left: 6px;
+}
+
+.columnHeader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.decorMark {
+  margin-right: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.columnTitle {
+  font-size: 11px;
+  line-height: 1.2;
+  color: $color-text-muted;
+}
+
+.valueRow {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.value {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.unit {
+  margin-left: 2px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.compare {
+  position: absolute;
+  top: 78px;
+  left: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+}

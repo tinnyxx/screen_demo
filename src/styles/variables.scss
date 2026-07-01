@@ -1,0 +1,54 @@
+$color-bg-dark: #000000;
+$background-scale: 0.87;
+$color-card-bg: rgba(20, 30, 50, 0.75);
+$color-card-border: rgba(64, 158, 255, 0.25);
+$color-text-muted: rgba(255, 255, 255, 0.45);
+$color-text-primary: rgba(255, 255, 255, 0.85);
+
+$header-tab-width: 3838;
+$header-tab-height: 326;
+$header-height: calc(100vw * #{$header-tab-height} / #{$header-tab-width});
+$design-width: 1920;
+$design-height: 1080;
+$equipment-status-width: calc(380 * 100vw / #{$design-width});
+$equipment-status-height: calc(300 * 100vh / #{$design-height});
+$usage-status-extra-height: 60px;
+$operation-status-extra-height: 30px;
+$task-reminder-extra-height: 140px;
+$core-data-offset-up: 65px;
+$monthly-report-extra-height: 25px;
+$equipment-status-top: 70px;
+$page-margin-left: 20px;
+$page-margin-right: 20px;
+$right-card-inset-x: 30px;
+$column-width: 25%;
+$column-padding: 1vh;
+$card-gap: 15px;
+$page-margin-bottom: calc(#{$column-padding} + 15px);
+$bottom-stats-height: 10.19vh;
+$card-radius: 0.74vh;
+$card-header-height: 3.7vh;
+$card-header-padding-x: 0.83vw;
+
+$font-size-title-zh: 16px;
+$font-size-title-en: 10px;
+$font-size-stat-title: 11px;
+
+$card-icon-size: 14px;
+$stat-icon-size: 14px;
+$title-offset-y: 10px;
+$icon-offset-y: 6px;
+
+@function rpx($value) {
+  @return calc(#{$value} * 100vw / 750);
+}
+
+$card-title-bottom: calc(0.56vh - #{$title-offset-y});
+$card-icon-bottom: calc(0.56vh - #{$icon-offset-y});
+$stat-title-bottom: calc(0.56vh - #{$title-offset-y} + 25px);
+$stat-icon-bottom: calc(0.56vh - #{$icon-offset-y} + 20px);
+
+$left-bottom-card-height: calc((100% - #{$column-padding * 3}) * 0.36 + #{$operation-status-extra-height});
+$right-top-card-height: calc((100% - #{$column-padding * 3}) * 0.28 - 40px);
+$right-middle-card-height: calc((100% - #{$column-padding * 3}) * 0.28 * 1.4 + #{$task-reminder-extra-height});
+$right-bottom-card-height: calc((100% - #{$column-padding * 3}) * 0.36 + #{$monthly-report-extra-height});

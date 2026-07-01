@@ -1,0 +1,110 @@
+$task-list-left: 30px;
+$task-status-width: 58px;
+$task-time-width: 68px;
+$task-row-gap: 31px;
+
+/* 运维任务提醒卡片内容区 */
+.panel {
+  position: absolute;
+  top: $card-header-height;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.list {
+  position: absolute;
+  top: 23px;
+  left: 0;
+  right: 4px;
+  bottom: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  &:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  }
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+.listItem {
+  position: relative;
+  padding-bottom: $task-row-gap;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: $task-list-left;
+    right: 10px;
+    bottom: calc(#{$task-row-gap} / 2);
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.row {
+  position: relative;
+  height: 23px;
+}
+
+.status {
+  position: absolute;
+  top: 50%;
+  left: $task-list-left;
+  width: $task-status-width;
+  margin-top: -11.5px;
+  padding: 4px 0;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.eventText {
+  position: absolute;
+  top: 50%;
+  left: calc(#{$task-list-left} + #{$task-status-width} + 8px);
+  right: calc(#{$task-time-width} + 10px);
+  margin-top: -0.5em;
+  font-size: 11px;
+  line-height: 1;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: $task-time-width;
+  margin-top: -0.5em;
+  font-size: 10px;
+  line-height: 1;
+  color: $color-text-muted;
+  text-align: right;
+  white-space: nowrap;
+}

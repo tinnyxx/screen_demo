@@ -1,0 +1,93 @@
+/* 底部浮动层 — 与左右栏底部对齐 */
+.bottomStats {
+  position: absolute;
+  left: calc(#{$column-width} + 25px);
+  right: $column-width;
+  bottom: $page-margin-bottom;
+  height: $bottom-stats-height;
+  padding-left: 5px;
+  z-index: 10;
+}
+
+/* 底部-小型数据统计卡片 */
+.statCard {
+  position: absolute;
+  bottom: 0;
+  width: 23.5%;
+  height: 100%;
+  border-radius: $card-radius;
+  background-color: $color-card-bg;
+  border: 1px solid $color-card-border;
+
+  &:nth-child(1) {
+    left: 0;
+  }
+
+  &:nth-child(2) {
+    left: 25.5%;
+  }
+
+  &:nth-child(3) {
+    left: 51%;
+  }
+
+  &:nth-child(4) {
+    left: 76.5%;
+  }
+}
+
+/* 卡片头部 — 标题与图标同一水平线 */
+.statHeader {
+  position: absolute;
+  top: $column-padding;
+  left: 0.83vw;
+  right: 0.83vw;
+  height: $stat-icon-size;
+}
+
+.statTitle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin-top: calc($font-size-stat-title / -2);
+  font-size: $font-size-stat-title;
+  font-weight: 500;
+  line-height: 1;
+  color: $color-text-primary;
+  white-space: nowrap;
+}
+
+.statIcon {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: $stat-icon-size;
+  height: $stat-icon-size;
+  margin-top: calc($stat-icon-size / -2);
+  object-fit: contain;
+}
+
+/* 卡片主体 — 大号数字 + 小号单位 */
+.statBody {
+  position: absolute;
+  top: calc(#{$column-padding} + #{$stat-icon-size} + 10px);
+  left: 0.83vw;
+  right: 0.83vw;
+  bottom: $column-padding;
+  margin: 0;
+}
+
+.statValue {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.statUnit {
+  margin-left: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.85);
+}

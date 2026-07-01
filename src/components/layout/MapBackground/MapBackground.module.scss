@@ -1,0 +1,21 @@
+/* 全屏地图背景层 — 黑色填充，图片保持原始长宽比 */
+.mapBackground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background-color: $color-bg-dark;
+}
+
+.mapImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: scale($background-scale);
+  transform-origin: center center;
+  pointer-events: none;
+  user-select: none;
+}

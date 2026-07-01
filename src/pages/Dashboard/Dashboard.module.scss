@@ -1,0 +1,20 @@
+/* 数字孪生大屏根容器 — 占满整个视口 */
+.dashboard {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: $color-bg-dark;
+}
+
+/* 信息浮层容器 — 覆盖于地图之上，随视口尺寸变化 */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.overlay > * {
+  pointer-events: auto;
+}

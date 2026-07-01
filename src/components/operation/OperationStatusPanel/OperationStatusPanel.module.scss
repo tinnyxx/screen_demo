@@ -1,0 +1,108 @@
+/* 设备运行状态卡片内容区 */
+.panel {
+  position: absolute;
+  top: $card-header-height;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 10px 8px;
+}
+
+.updateTime {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  font-size: 10px;
+  line-height: 1;
+  color: $color-text-muted;
+  white-space: nowrap;
+}
+
+.tableWrap {
+  position: absolute;
+  top: 22px;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.scrollBody {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: 0 4px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: $color-text-primary;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table th {
+  height: 24px;
+  font-weight: 500;
+  color: $color-text-muted;
+  background-color: rgba(20, 30, 50, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.table td {
+  height: 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 14%;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 12%;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 12%;
+}
+
+.table th:nth-child(4),
+.table td:nth-child(4),
+.table th:nth-child(5),
+.table td:nth-child(5),
+.table th:nth-child(6),
+.table td:nth-child(6) {
+  width: 20.666%;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}

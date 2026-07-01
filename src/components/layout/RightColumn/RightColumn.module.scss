@@ -1,0 +1,54 @@
+/* 右侧栏容器 — 顶栏固定 + 底部卡片自底向上堆叠 */
+.rightColumn {
+  position: absolute;
+  top: $header-height;
+  right: 0;
+  bottom: $page-margin-bottom;
+  width: $column-width;
+  z-index: 10;
+  padding-top: $column-padding;
+  padding-left: $column-padding;
+}
+
+/* 右侧-核心数据展示卡片 — 顶部固定，避免被遮挡 */
+.coreData {
+  position: absolute;
+  top: calc(#{$column-padding} - #{$core-data-offset-up});
+  left: calc(#{$column-padding} + #{$right-card-inset-x});
+  right: calc(#{$page-margin-right} + #{$right-card-inset-x});
+  height: $right-top-card-height;
+  border-radius: $card-radius;
+  background-color: $color-card-bg;
+  border: 1px solid $color-card-border;
+  overflow: hidden;
+}
+
+/* 右侧-运维任务提醒卡片 — 自底向上，高度不超过顶部卡片下方空间 */
+.taskReminder {
+  position: absolute;
+  bottom: calc(#{$right-bottom-card-height} + #{$card-gap});
+  left: calc(#{$column-padding} + #{$right-card-inset-x});
+  right: calc(#{$page-margin-right} + #{$right-card-inset-x});
+  height: $right-middle-card-height;
+  max-height: calc(
+    100% - #{$column-padding} - #{$right-top-card-height} - #{$card-gap} - #{$right-bottom-card-height} -
+      #{$card-gap} + #{$core-data-offset-up}
+  );
+  border-radius: $card-radius;
+  background-color: $color-card-bg;
+  border: 1px solid $color-card-border;
+  overflow: hidden;
+}
+
+/* 右侧-上月数据报告卡片 — 底部锚定 */
+.monthlyReport {
+  position: absolute;
+  bottom: 0;
+  left: calc(#{$column-padding} + #{$right-card-inset-x});
+  right: calc(#{$page-margin-right} + #{$right-card-inset-x});
+  height: $right-bottom-card-height;
+  border-radius: $card-radius;
+  background-color: $color-card-bg;
+  border: 1px solid $color-card-border;
+  overflow: hidden;
+}

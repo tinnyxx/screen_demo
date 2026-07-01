@@ -1,0 +1,46 @@
+/* 侧栏卡片标题 — 图标 + 中文 11px + / + 英文 7px */
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: $card-header-height;
+}
+
+.icon {
+  position: absolute;
+  left: $card-header-padding-x;
+  bottom: calc(#{$card-icon-bottom} + #{rpx(20)});
+  width: $card-icon-size;
+  height: $card-icon-size;
+  object-fit: contain;
+  transform: translateY(rpx(20));
+}
+
+.title {
+  position: absolute;
+  left: calc($card-header-padding-x + 19px);
+  right: $card-header-padding-x;
+  bottom: $card-title-bottom;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titleZh {
+  font-size: $font-size-title-zh;
+  color: $color-text-primary;
+}
+
+.separator {
+  font-size: $font-size-title-en;
+  color: $color-text-muted;
+}
+
+.titleEn {
+  font-size: $font-size-title-en;
+  color: $color-text-muted;
+  letter-spacing: 0.02em;
+}

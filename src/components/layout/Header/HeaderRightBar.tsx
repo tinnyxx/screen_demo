@@ -3,8 +3,8 @@ import notificationIcon from '@/assets/top-Notification.png'
 import settingIcon from '@/assets/top-Setting.png'
 import managerAvatar from '@/assets/manager-img.png'
 import { useHeaderWeather } from '@/hooks/useHeaderWeather'
-import { headerInfoMock } from '@/mock/headerInfo'
 import { WeatherIcon } from '@/components/weather/WeatherIcon/WeatherIcon'
+import { useAuthStore } from '@/stores/authStore'
 import styles from './Header.module.scss'
 
 function formatDate(date: Date) {
@@ -28,7 +28,8 @@ function formatTemperature(value: number) {
 export function HeaderRightBar() {
   const [now, setNow] = useState(() => new Date())
   const weather = useHeaderWeather()
-  const { managerName } = headerInfoMock
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -61,10 +62,12 @@ export function HeaderRightBar() {
         <div className={styles.avatarWrap}>
           <img className={styles.avatar} src={managerAvatar} alt="" aria-hidden="true" />
         </div>
-        <span className={styles.managerName}>{managerName}</span>
+        <span className={styles.managerName}>{user?.nickname ?? '管理员'}</span>
       </div>
 
-      <span className={styles.logout}>退出</span>
+      <button type="button" className={styles.logout} onClick={logout}>
+        退出
+      </button>
     </div>
   )
 }

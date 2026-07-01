@@ -14,6 +14,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/auth': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
       '/api/weather': {
         target: 'https://uapis.cn',
         changeOrigin: true,

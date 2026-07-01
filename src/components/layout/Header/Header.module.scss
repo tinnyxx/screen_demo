@@ -111,8 +111,11 @@
 }
 
 .logout {
+  padding: 0;
+  border: 0;
+  background: transparent;
   font-size: 14px;
   line-height: 1;
   color: $color-text-muted;
-  cursor: default;
+  cursor: pointer;
 }

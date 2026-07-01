@@ -6,9 +6,7 @@ import {
 } from '@/components/weather/WeatherIcon/weatherTypes'
 import { headerInfoMock } from '@/mock/headerInfo'
 
-const WEATHER_API_URL = import.meta.env.DEV
-  ? '/api/weather'
-  : 'https://uapis.cn/api/v1/misc/weather'
+const WEATHER_API_URL = '/api/weather'
 
 export interface WeatherInfo {
   temperature: number

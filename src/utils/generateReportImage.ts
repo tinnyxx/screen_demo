@@ -14,7 +14,7 @@ const REPORT_LAYOUT = {
   subtitleFontSize: 42,
   subtitleLetterSpacing: 10,
   subtitleBaseY: 0.395,
-  subtitleOffsetY: 210,
+  subtitleOffsetY: 280,
   subtitleOffsetX: 210,
   sectionStartBaseY: 0.465,
   sectionOffsetY: 175,

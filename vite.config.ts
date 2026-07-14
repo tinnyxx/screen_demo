@@ -18,6 +18,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/api/redeem': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
       '/api/weather': {
         target: 'https://uapis.cn',
         changeOrigin: true,

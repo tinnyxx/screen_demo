@@ -111,7 +111,7 @@ async function findRedeemCode(code) {
     FROM redeem_codes rc
     LEFT JOIN redeem_records rr ON rc.redeem_record_id = rr.id
     LEFT JOIN users u ON rc.assigned_user_id = u.id
-    WHERE rc.code = ${code}
+    WHERE UPPER(TRIM(rc.code)) = ${code}
     LIMIT 1
   `
   return rows[0] ?? null
@@ -148,7 +148,7 @@ app.post('/api/redeem/verify', async (req, res) => {
     const updated = await sql`
       UPDATE redeem_codes
       SET status = 'used'
-      WHERE code = ${code} AND status = 'assigned'
+      WHERE UPPER(TRIM(code)) = ${code} AND status = 'assigned'
       RETURNING code, status
     `
 

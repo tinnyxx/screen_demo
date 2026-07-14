@@ -19,6 +19,14 @@ function formatDate(value: string | null) {
   return String(value).slice(0, 10)
 }
 
+function formatDateTime(value: string | null) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
 function statusClassName(status: string) {
   if (status === 'assigned') return styles.badgeAssigned
   if (status === 'used') return styles.badgeUsed
@@ -169,6 +177,12 @@ export function RedeemVerifyPage() {
                 <span className={styles.metaLabel}>使用范围</span>
                 <span className={styles.metaValue}>{info.validRange || '-'}</span>
               </div>
+              {info.status === 'used' || info.usedAt ? (
+                <div className={styles.metaRow}>
+                  <span className={styles.metaLabel}>核销时间</span>
+                  <span className={styles.metaValue}>{formatDateTime(info.usedAt)}</span>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}

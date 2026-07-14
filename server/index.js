@@ -86,6 +86,7 @@ function mapRedeemCodeRow(row) {
     userNickname: row.user_nickname,
     userPhone: row.user_phone,
     assignedAt: row.assigned_at,
+    usedAt: row.used_at,
     redeemedAt: row.redeemed_at,
     canVerify: row.status === 'assigned',
   }
@@ -99,6 +100,7 @@ async function findRedeemCode(code) {
       rc.status,
       rc.assigned_user_id,
       rc.assigned_at,
+      rc.used_at,
       rr.product_name,
       rr.img,
       rr.cost,
@@ -147,9 +149,9 @@ app.post('/api/redeem/verify', async (req, res) => {
   try {
     const updated = await sql`
       UPDATE redeem_codes
-      SET status = 'used'
+      SET status = 'used', used_at = CURRENT_TIMESTAMP
       WHERE UPPER(TRIM(code)) = ${code} AND status = 'assigned'
-      RETURNING code, status
+      RETURNING code, status, used_at
     `
 
     if (!updated[0]) {

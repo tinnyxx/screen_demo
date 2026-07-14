@@ -121,6 +121,7 @@ CREATE TABLE redeem_codes (
     batch_id         VARCHAR(64),                       -- 导入批次，便于追溯
     assigned_user_id INTEGER REFERENCES users(id),
     assigned_at      TIMESTAMP,
+    used_at          TIMESTAMP,                         -- 核销时间
     redeem_record_id INTEGER REFERENCES redeem_records(id),
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -151,5 +152,5 @@ VALUES ('root', '超级管理员', '123456')
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO admin_tb (username, nickname, password)
-VALUES ('checkout01', '核销员01', '123456')
+VALUES ('checkout01', '核销入口01', '123456')
 ON CONFLICT (username) DO NOTHING;

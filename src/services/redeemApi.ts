@@ -14,6 +14,7 @@ export interface RedeemCodeInfo {
   userNickname: string | null
   userPhone: string | null
   assignedAt: string | null
+  usedAt: string | null
   redeemedAt: string | null
   canVerify: boolean
   message?: string

@@ -30,7 +30,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export async function lookupRedeemCode(code: string): Promise<RedeemCodeInfo> {
-  const normalized = code.trim().toUpperCase()
+  const normalized = code.trim()
   if (normalized.length !== 18) {
     throw new Error('请输入18位兑换码')
   }
@@ -46,7 +46,7 @@ export async function lookupRedeemCode(code: string): Promise<RedeemCodeInfo> {
 }
 
 export async function verifyRedeemCode(code: string): Promise<RedeemCodeInfo> {
-  const normalized = code.trim().toUpperCase()
+  const normalized = code.trim()
   if (normalized.length !== 18) {
     throw new Error('请输入18位兑换码')
   }

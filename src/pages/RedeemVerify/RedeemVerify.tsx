@@ -109,7 +109,7 @@ export function RedeemVerifyPage() {
               className={styles.input}
               value={code}
               onChange={(event) => {
-                setCode(event.target.value.trim().toUpperCase())
+                setCode(event.target.value)
                 setError('')
                 setSuccess('')
               }}

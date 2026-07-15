@@ -173,10 +173,6 @@ export function RedeemVerifyPage() {
                   {formatDate(info.validFrom)} ~ {formatDate(info.validTo)}
                 </span>
               </div>
-              <div className={styles.metaRow}>
-                <span className={styles.metaLabel}>使用范围</span>
-                <span className={styles.metaValue}>{info.validRange || '-'}</span>
-              </div>
               {info.status === 'used' || info.usedAt ? (
                 <div className={styles.metaRow}>
                   <span className={styles.metaLabel}>核销时间</span>

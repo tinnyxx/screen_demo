@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import notificationIcon from '@/assets/top-Notification.png'
-import settingIcon from '@/assets/top-Setting.png'
+import qrcodeImg from '@/assets/top-qrcode.jpg'
 import managerAvatar from '@/assets/manager-img.png'
 import { useHeaderWeather } from '@/hooks/useHeaderWeather'
 import { WeatherIcon } from '@/components/weather/WeatherIcon/WeatherIcon'
@@ -27,6 +28,10 @@ function formatTemperature(value: number) {
 
 export function HeaderRightBar() {
   const [now, setNow] = useState(() => new Date())
+  const [popupOpen, setPopupOpen] = useState(false)
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 })
+  const notificationRef = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<number | null>(null)
   const weather = useHeaderWeather()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
@@ -38,6 +43,43 @@ export function HeaderRightBar() {
 
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current)
+      }
+    }
+  }, [])
+
+  const updatePopupPos = () => {
+    const el = notificationRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setPopupPos({
+      top: rect.bottom + 8,
+      left: rect.left + rect.width / 2,
+    })
+  }
+
+  const openPopup = () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    updatePopupPos()
+    setPopupOpen(true)
+  }
+
+  const scheduleClosePopup = () => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current)
+    }
+    closeTimerRef.current = window.setTimeout(() => {
+      setPopupOpen(false)
+      closeTimerRef.current = null
+    }, 120)
+  }
 
   return (
     <div className={styles.headerRight}>
@@ -55,8 +97,29 @@ export function HeaderRightBar() {
         <span className={styles.weatherDesc}>{weather.description}</span>
       </div>
 
-      <img className={styles.actionIcon} src={notificationIcon} alt="通知" />
-      <img className={styles.actionIcon} src={settingIcon} alt="设置" />
+      <div
+        ref={notificationRef}
+        className={styles.notificationWrap}
+        onMouseEnter={openPopup}
+        onMouseLeave={scheduleClosePopup}
+      >
+        <img className={styles.actionIcon} src={notificationIcon} alt="通知" />
+      </div>
+
+      {popupOpen
+        ? createPortal(
+            <div
+              className={styles.notificationPopup}
+              role="tooltip"
+              style={{ top: popupPos.top, left: popupPos.left }}
+              onMouseEnter={openPopup}
+              onMouseLeave={scheduleClosePopup}
+            >
+              <img className={styles.qrcode} src={qrcodeImg} alt="二维码" />
+            </div>,
+            document.body,
+          )
+        : null}
 
       <div className={styles.manager}>
         <div className={styles.avatarWrap}>

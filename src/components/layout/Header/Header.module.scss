@@ -42,7 +42,7 @@
 .headerRight {
   position: absolute;
   top: 50%;
-  right: 24px;
+  right: 72px;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -81,6 +81,33 @@
   height: 18px;
   object-fit: contain;
   flex-shrink: 0;
+}
+
+.notificationWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.notificationPopup {
+  position: fixed;
+  z-index: 9999;
+  padding: 10px;
+  border: 1px solid rgba(64, 158, 255, 0.35);
+  border-radius: 10px;
+  background-color: rgba(20, 30, 50, 0.96);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.qrcode {
+  display: block;
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
 }
 
 .manager {

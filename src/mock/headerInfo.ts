@@ -15,5 +15,5 @@ export const headerInfoMock: HeaderInfoData = {
     temperature: 28,
     description: '晴',
   },
-  managerName: '物业管理员01',
+  managerName: '蓝湾管理员',
 }

@@ -1,11 +1,14 @@
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
 import locationIcon from '@/assets/location_icon.png'
-import { mapDevicesMock } from '@/mock/mapDevices'
 import styles from './MapDeviceMarkers.module.scss'
 
 export function MapDeviceMarkers() {
+  const mocks = useCommunityMocks()
+  if (!mocks) return null
+
   return (
     <div className={styles.centerArea} aria-label="中心区域设备分布">
-      {mapDevicesMock.markers.map((marker, index) => (
+      {mocks.mapDevices.markers.map((marker, index) => (
         <div
           key={marker.id}
           className={styles.marker}

@@ -1,7 +1,7 @@
 import bUseIcon from '@/assets/b-use-icon.png'
 import bPeeIcon from '@/assets/b-pee-icon.png'
 import bDealIcon from '@/assets/b-deal-icon.png'
-import { bottomStatsMock } from '@/mock/bottomStats'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
 import styles from './BottomStats.module.scss'
 
 const iconMap = {
@@ -12,9 +12,12 @@ const iconMap = {
 } as const
 
 export function BottomStats() {
+  const mocks = useCommunityMocks()
+  if (!mocks) return null
+
   return (
     <section className={styles.bottomStats} aria-label="底部数据统计浮层">
-      {bottomStatsMock.map((item) => (
+      {mocks.bottomStats.map((item) => (
         <article key={item.key} className={styles.statCard} aria-label={item.label}>
           <header className={styles.statHeader}>
             <span className={styles.statTitle}>{item.label}</span>

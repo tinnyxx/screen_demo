@@ -144,13 +144,17 @@ CREATE TABLE admin_tb (
 );
 
 INSERT INTO admin_tb (username, nickname, password)
-VALUES ('admin', '物业管理员01', '123456')
-ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO admin_tb (username, nickname, password)
 VALUES ('root', '超级管理员', '123456')
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO admin_tb (username, nickname, password)
 VALUES ('checkout01', '核销入口01', '123456')
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO admin_tb (username, nickname, password)
+VALUES ('admin_lanwan', '蓝湾管理员', '123456')
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO admin_tb (username, nickname, password)
+VALUES ('admin_huarun', '华润管理员', '123456')
 ON CONFLICT (username) DO NOTHING;

@@ -1,11 +1,15 @@
-import { compareTrendMeta, coreDataMock } from '@/mock/coreData'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { compareTrendMeta } from '@/mock/coreData'
 import styles from './CoreDataPanel.module.scss'
 
 export function CoreDataPanel() {
+  const mocks = useCommunityMocks()
+  if (!mocks) return null
+
   return (
     <div className={styles.panel}>
       <div className={styles.columns}>
-        {coreDataMock.columns.map((column, index) => {
+        {mocks.coreData.columns.map((column, index) => {
           const trendMeta = compareTrendMeta[column.trend]
 
           return (

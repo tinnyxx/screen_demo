@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
 import {
   getMetricColor,
-  operationStatusMock,
   resolveDeviceStatus,
   deviceStatusMeta,
   type DeviceOperationRow,
   type MetricKey,
+  type OperationStatusData,
 } from '@/mock/equipmentOperation'
 import { MetricProgress } from './MetricProgress'
 import styles from './OperationStatusPanel.module.scss'
@@ -20,7 +21,7 @@ function DeviceRow({
   abnormalThreshold,
 }: {
   device: DeviceOperationRow
-  metricColors: typeof operationStatusMock.metricColors
+  metricColors: OperationStatusData['metricColors']
   warningColor: string
   abnormalThreshold: number
 }) {
@@ -62,10 +63,17 @@ function DeviceRow({
 }
 
 export function OperationStatusPanel() {
+  const mocks = useCommunityMocks()
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const scrollRemainderRef = useRef(0)
-  const { columns, devices, metricColors, warningColor, abnormalThreshold } = operationStatusMock
+
+  const operationStatus = mocks?.operationStatus
+  const columns = operationStatus?.columns ?? []
+  const devices = operationStatus?.devices ?? []
+  const metricColors = operationStatus?.metricColors
+  const warningColor = operationStatus?.warningColor ?? ''
+  const abnormalThreshold = operationStatus?.abnormalThreshold ?? 80
   const loopDevices = [...devices, ...devices]
 
   useEffect(() => {
@@ -99,6 +107,8 @@ export function OperationStatusPanel() {
     animationId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(animationId)
   }, [devices.length])
+
+  if (!operationStatus || !metricColors) return null
 
   return (
     <div className={styles.panel}>

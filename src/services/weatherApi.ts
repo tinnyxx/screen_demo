@@ -4,7 +4,7 @@ import {
   resolveWeatherIconType,
   type WeatherIconType,
 } from '@/components/weather/WeatherIcon/weatherTypes'
-import { headerInfoMock } from '@/mock/headerInfo'
+import { headerInfoMock, type HeaderInfoData } from '@/mock/headerInfo'
 
 const WEATHER_API_URL = '/api/weather'
 
@@ -31,8 +31,8 @@ export function mapWeatherResponse(data: UapisWeatherResponse): WeatherInfo {
   }
 }
 
-export function getFallbackWeather(): WeatherInfo {
-  const { temperature, description } = headerInfoMock.weather
+export function getFallbackWeather(headerInfo: HeaderInfoData = headerInfoMock): WeatherInfo {
+  const { temperature, description } = headerInfo.weather
 
   return {
     temperature,
@@ -41,8 +41,7 @@ export function getFallbackWeather(): WeatherInfo {
   }
 }
 
-export async function fetchWeather(city = headerInfoMock.weatherCity): Promise<WeatherInfo> {
-  const { data } = await axios.get<UapisWeatherResponse>(WEATHER_API_URL, {
+export async function fetchWeather(city = headerInfoMock.weatherCity): Promise<WeatherInfo> {  const { data } = await axios.get<UapisWeatherResponse>(WEATHER_API_URL, {
     params: {
       city,
       lang: 'zh',

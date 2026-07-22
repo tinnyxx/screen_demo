@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { headerInfoMock } from '@/mock/headerInfo'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
 import {
   fetchWeather,
   getFallbackWeather,
@@ -9,21 +9,25 @@ import {
 const WEATHER_REFRESH_MS = 5 * 60 * 1000
 
 export function useHeaderWeather() {
+  const mocks = useCommunityMocks()
+  const weatherCity = mocks?.headerInfo.weatherCity
   const [weather, setWeather] = useState<WeatherInfo>(() => getFallbackWeather())
 
   useEffect(() => {
+    if (!weatherCity) return
+
     let cancelled = false
 
     const loadWeather = async () => {
       try {
-        const data = await fetchWeather(headerInfoMock.weatherCity)
+        const data = await fetchWeather(weatherCity)
         if (!cancelled) {
           setWeather(data)
         }
       } catch (error) {
         console.error('获取天气失败', error)
         if (!cancelled) {
-          setWeather(getFallbackWeather())
+          setWeather(getFallbackWeather(mocks?.headerInfo))
         }
       }
     }
@@ -35,7 +39,7 @@ export function useHeaderWeather() {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [])
+  }, [weatherCity, mocks?.headerInfo])
 
   return weather
 }

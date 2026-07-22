@@ -138,7 +138,7 @@ function drawReportContent(
 
 export async function generateAndDownloadReportImage(
   data: MonthlyReportData = monthlyReportMock,
-  filename = 'monthly-report.png',
+  filename = `${data.meta.communityName}-monthly-report.png`,
 ) {
   const template = await loadImage(reportTemplate)
   const canvas = document.createElement('canvas')

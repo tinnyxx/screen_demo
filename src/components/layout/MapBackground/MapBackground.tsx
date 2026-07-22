@@ -1,12 +1,15 @@
-import backgroundImg from '@/assets/lanwan_background.png'
+import { useActiveCommunity } from '@/hooks/useActiveCommunity'
 import styles from './MapBackground.module.scss'
 
 export function MapBackground() {
+  const community = useActiveCommunity()
+  if (!community) return null
+
   return (
     <main className={styles.mapBackground} aria-label="园区鸟瞰地图背景">
       <img
         className={styles.mapImage}
-        src={backgroundImg}
+        src={community.background}
         alt=""
         aria-hidden="true"
       />

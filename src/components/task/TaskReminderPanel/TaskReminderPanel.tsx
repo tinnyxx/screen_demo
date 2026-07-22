@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { sortTaskReminderItems, taskReminderMock, taskStatusMeta } from '@/mock/taskReminder'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { sortTaskReminderItems, taskStatusMeta } from '@/mock/taskReminder'
 import styles from './TaskReminderPanel.module.scss'
 
 const SCROLL_SPEED = 0.5
 
 export function TaskReminderPanel() {
+  const mocks = useCommunityMocks()
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const scrollRemainderRef = useRef(0)
 
-  const sortedItems = useMemo(
-    () => sortTaskReminderItems(taskReminderMock.items),
-    [],
-  )
+  const items = mocks?.taskReminder.items ?? []
+  const sortedItems = useMemo(() => sortTaskReminderItems(items), [items])
   const loopItems = useMemo(() => [...sortedItems, ...sortedItems], [sortedItems])
 
   useEffect(() => {
@@ -46,6 +46,8 @@ export function TaskReminderPanel() {
     animationId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(animationId)
   }, [sortedItems.length])
+
+  if (!mocks) return null
 
   return (
     <div className={styles.panel}>

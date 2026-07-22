@@ -6,6 +6,8 @@ import managerAvatar from '@/assets/manager-img.png'
 import { useHeaderWeather } from '@/hooks/useHeaderWeather'
 import { WeatherIcon } from '@/components/weather/WeatherIcon/WeatherIcon'
 import { useAuthStore } from '@/stores/authStore'
+import { useCommunityStore } from '@/stores/communityStore'
+import { isSuperAdmin } from '@/config/communities'
 import styles from './Header.module.scss'
 
 function formatDate(date: Date) {
@@ -35,6 +37,17 @@ export function HeaderRightBar() {
   const weather = useHeaderWeather()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const clearCommunity = useCommunityStore((state) => state.clearCommunity)
+  const showSwitchCommunity = Boolean(user && isSuperAdmin(user.username))
+
+  const handleLogout = () => {
+    clearCommunity()
+    logout()
+  }
+
+  const handleSwitchCommunity = () => {
+    clearCommunity()
+  }
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -128,7 +141,13 @@ export function HeaderRightBar() {
         <span className={styles.managerName}>{user?.nickname ?? '管理员'}</span>
       </div>
 
-      <button type="button" className={styles.logout} onClick={logout}>
+      {showSwitchCommunity ? (
+        <button type="button" className={styles.logout} onClick={handleSwitchCommunity}>
+          切换小区
+        </button>
+      ) : null}
+
+      <button type="button" className={styles.logout} onClick={handleLogout}>
         退出
       </button>
     </div>

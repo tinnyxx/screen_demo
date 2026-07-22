@@ -1,9 +1,12 @@
-import { equipmentStatusMock } from '@/mock/equipmentStatus'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
 import { EquipmentStatusChart } from './EquipmentStatusChart'
 import styles from './EquipmentStatusPanel.module.scss'
 
 export function EquipmentStatusPanel() {
-  const { runningLabel, runningCount, legend } = equipmentStatusMock
+  const mocks = useCommunityMocks()
+  if (!mocks) return null
+
+  const { runningLabel, runningCount, legend } = mocks.equipmentStatus
 
   return (
     <div className={styles.panel}>

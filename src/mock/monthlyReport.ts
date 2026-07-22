@@ -48,7 +48,7 @@ export const monthlyReportMock: MonthlyReportData = {
     year: 2026,
     month: 5,
     city: '深圳',
-    communityName: '瓴界花园小区',
+    communityName: '蓝湾小区',
   },
   items: [
     {

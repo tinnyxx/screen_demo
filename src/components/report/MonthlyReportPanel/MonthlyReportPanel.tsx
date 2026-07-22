@@ -2,12 +2,12 @@ import baogaoNiaoyeIcon from '@/assets/baogao_niaoye.png'
 import baogaoDakaIcon from '@/assets/baogao_daka.png'
 import baogaoJieshuiIcon from '@/assets/baogao_jieshui.png'
 import baogaoAnniuIcon from '@/assets/baogao_anniu.png'
+import { useCommunityMocks } from '@/hooks/useActiveCommunity'
 import {
   formatReportValue,
   getMonthlyReportCardItems,
   getReportDynamicTarget,
   getReportProgress,
-  monthlyReportMock,
   type MonthlyReportItem,
 } from '@/mock/monthlyReport'
 import { generateAndDownloadReportImage } from '@/utils/generateReportImage'
@@ -20,12 +20,16 @@ const itemIcons: Record<MonthlyReportItem['key'], string> = {
 }
 
 export function MonthlyReportPanel() {
-  const { actionLabel } = monthlyReportMock
-  const items = getMonthlyReportCardItems(monthlyReportMock)
+  const mocks = useCommunityMocks()
+  if (!mocks) return null
+
+  const { monthlyReport } = mocks
+  const { actionLabel } = monthlyReport
+  const items = getMonthlyReportCardItems(monthlyReport)
 
   const handleDownloadReport = async () => {
     try {
-      await generateAndDownloadReportImage()
+      await generateAndDownloadReportImage(monthlyReport)
     } catch (error) {
       console.error('生成报告图片失败', error)
     }

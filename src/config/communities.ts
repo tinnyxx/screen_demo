@@ -8,11 +8,15 @@ export interface CommunityConfig {
   name: string
   projectName: string
   background: string
+  /** 相对 object-fit: contain 的额外缩放 */
+  backgroundScale: number
   adminUsername: string
 }
 
 export const SUPER_ADMIN_USERNAME = 'root'
 export const CHECKOUT_USERNAME = 'checkout01'
+
+const DEFAULT_BACKGROUND_SCALE = 1.2
 
 export const communities: CommunityConfig[] = [
   {
@@ -20,6 +24,7 @@ export const communities: CommunityConfig[] = [
     name: '蓝湾小区',
     projectName: '蓝湾商务大厦',
     background: lanwanBackground,
+    backgroundScale: DEFAULT_BACKGROUND_SCALE,
     adminUsername: 'admin_lanwan',
   },
   {
@@ -27,6 +32,8 @@ export const communities: CommunityConfig[] = [
     name: '华润小区',
     projectName: '华润小区',
     background: huarunBackground,
+    // 相对默认缩放再缩小 1.3 倍
+    backgroundScale: DEFAULT_BACKGROUND_SCALE / 1.3,
     adminUsername: 'admin_huarun',
   },
 ]

@@ -12,6 +12,7 @@ export function MapBackground() {
         src={community.background}
         alt=""
         aria-hidden="true"
+        style={{ transform: `scale(${community.backgroundScale})` }}
       />
     </main>
   )

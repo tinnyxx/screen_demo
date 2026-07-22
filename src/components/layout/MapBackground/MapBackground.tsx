@@ -1,4 +1,4 @@
-import backgroundImg from '@/assets/background.png'
+import backgroundImg from '@/assets/lanwan_background.png'
 import styles from './MapBackground.module.scss'
 
 export function MapBackground() {

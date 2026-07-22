@@ -12,6 +12,30 @@
   background-size: 100% 100%;
 }
 
+.projectInfo {
+  position: absolute;
+  top: 50%;
+  left: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: -72px;
+  white-space: nowrap;
+}
+
+.projectIcon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.projectName {
+  font-size: 14px;
+  line-height: 1;
+  color: $color-text-primary;
+}
+
 .titleBlock {
   position: absolute;
   top: 50%;

@@ -32,6 +32,12 @@
   color: $color-text-muted;
 }
 
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
 .logout {
   flex-shrink: 0;
   height: 36px;

@@ -122,6 +122,7 @@ CREATE TABLE redeem_codes (
     assigned_user_id INTEGER REFERENCES users(id),
     assigned_at      TIMESTAMP,
     used_at          TIMESTAMP,                         -- 核销时间
+    community_id     VARCHAR(32),                       -- 核销小区：lanwan | huarun
     redeem_record_id INTEGER REFERENCES redeem_records(id),
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

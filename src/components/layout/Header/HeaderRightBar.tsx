@@ -5,6 +5,7 @@ import qrcodeImg from '@/assets/top-qrcode.jpg'
 import managerAvatar from '@/assets/manager-img.png'
 import { useHeaderWeather } from '@/hooks/useHeaderWeather'
 import { WeatherIcon } from '@/components/weather/WeatherIcon/WeatherIcon'
+import { useAppModeStore } from '@/stores/appModeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCommunityStore } from '@/stores/communityStore'
 import { isSuperAdmin } from '@/config/communities'
@@ -38,15 +39,23 @@ export function HeaderRightBar() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const clearCommunity = useCommunityStore((state) => state.clearCommunity)
+  const setMode = useAppModeStore((state) => state.setMode)
+  const resetMode = useAppModeStore((state) => state.resetMode)
   const showSwitchCommunity = Boolean(user && isSuperAdmin(user.username))
 
   const handleLogout = () => {
     clearCommunity()
+    resetMode()
     logout()
   }
 
   const handleSwitchCommunity = () => {
     clearCommunity()
+  }
+
+  const handleBackToHub = () => {
+    clearCommunity()
+    setMode('hub')
   }
 
   useEffect(() => {
@@ -140,6 +149,10 @@ export function HeaderRightBar() {
         </div>
         <span className={styles.managerName}>{user?.nickname ?? '管理员'}</span>
       </div>
+
+      <button type="button" className={styles.logout} onClick={handleBackToHub}>
+        返回系统选择
+      </button>
 
       {showSwitchCommunity ? (
         <button type="button" className={styles.logout} onClick={handleSwitchCommunity}>

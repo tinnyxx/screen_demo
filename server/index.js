@@ -71,6 +71,13 @@ function normalizeRedeemCode(raw) {
   return String(raw ?? '').trim()
 }
 
+const VALID_COMMUNITY_IDS = new Set(['lanwan', 'huarun'])
+
+function normalizeCommunityId(raw) {
+  const value = String(raw ?? '').trim()
+  return VALID_COMMUNITY_IDS.has(value) ? value : null
+}
+
 function mapRedeemCodeRow(row) {
   return {
     code: String(row.code ?? '').trim(),
@@ -82,6 +89,7 @@ function mapRedeemCodeRow(row) {
     validTo: row.valid_to,
     validRange: row.valid_range,
     status: row.status,
+    communityId: row.community_id ?? null,
     assignedUserId: row.assigned_user_id,
     userNickname: row.user_nickname,
     userPhone: row.user_phone,
@@ -98,6 +106,7 @@ async function findRedeemCode(code) {
       rc.code,
       rc.product_id,
       rc.status,
+      rc.community_id,
       rc.assigned_user_id,
       rc.assigned_at,
       rc.used_at,
@@ -141,17 +150,25 @@ app.get('/api/redeem/lookup', async (req, res) => {
 
 app.post('/api/redeem/verify', async (req, res) => {
   const code = normalizeRedeemCode(req.body?.code)
+  const communityId = normalizeCommunityId(req.body?.communityId)
 
   if (!code || code.length !== 18) {
     return res.status(400).json({ message: '请输入18位兑换码' })
   }
 
+  if (!communityId) {
+    return res.status(400).json({ message: '请指定核销小区（lanwan / huarun）' })
+  }
+
   try {
     const updated = await sql`
       UPDATE redeem_codes
-      SET status = 'used', used_at = CURRENT_TIMESTAMP
+      SET
+        status = 'used',
+        used_at = CURRENT_TIMESTAMP,
+        community_id = ${communityId}
       WHERE TRIM(code) = ${code} AND status = 'assigned'
-      RETURNING code, status, used_at
+      RETURNING code, status, used_at, community_id
     `
 
     if (!updated[0]) {
@@ -180,6 +197,122 @@ app.post('/api/redeem/verify', async (req, res) => {
     })
   } catch (error) {
     console.error('Redeem verify failed:', error)
+    return res.status(500).json({ message: '服务器错误，请稍后重试' })
+  }
+})
+
+app.get('/api/redeem/stats', async (req, res) => {
+  const communityId = normalizeCommunityId(req.query.communityId)
+
+  try {
+    const rows = communityId
+      ? await sql`
+          SELECT
+            rc.code,
+            rc.product_id,
+            rc.community_id,
+            rc.used_at,
+            rr.product_name,
+            u.nickname AS user_nickname,
+            u.phone AS user_phone
+          FROM redeem_codes rc
+          LEFT JOIN redeem_records rr ON rc.redeem_record_id = rr.id
+          LEFT JOIN users u ON rc.assigned_user_id = u.id
+          WHERE rc.status = 'used'
+            AND rc.community_id = ${communityId}
+          ORDER BY rc.used_at DESC NULLS LAST, rc.code ASC
+        `
+      : await sql`
+          SELECT
+            rc.code,
+            rc.product_id,
+            rc.community_id,
+            rc.used_at,
+            rr.product_name,
+            u.nickname AS user_nickname,
+            u.phone AS user_phone
+          FROM redeem_codes rc
+          LEFT JOIN redeem_records rr ON rc.redeem_record_id = rr.id
+          LEFT JOIN users u ON rc.assigned_user_id = u.id
+          WHERE rc.status = 'used'
+            AND rc.community_id IS NOT NULL
+          ORDER BY rc.used_at DESC NULLS LAST, rc.code ASC
+        `
+
+    const productTypeMap = new Map()
+    const communityMap = new Map()
+
+    for (const row of rows) {
+      const productKey = row.product_id || row.product_name || 'unknown'
+      const productName = row.product_name || row.product_id || '未知礼品'
+      const existingProduct = productTypeMap.get(productKey)
+      if (existingProduct) {
+        existingProduct.count += 1
+      } else {
+        productTypeMap.set(productKey, {
+          productId: row.product_id,
+          productName,
+          count: 1,
+        })
+      }
+
+      const cid = row.community_id
+      if (!communityMap.has(cid)) {
+        communityMap.set(cid, {
+          communityId: cid,
+          total: 0,
+          productTypes: new Map(),
+          codes: [],
+        })
+      }
+      const community = communityMap.get(cid)
+      community.total += 1
+      community.codes.push({
+        code: String(row.code ?? '').trim(),
+        productId: row.product_id,
+        productName,
+        communityId: cid,
+        usedAt: row.used_at,
+        userNickname: row.user_nickname,
+        userPhone: row.user_phone,
+      })
+
+      const communityProduct = community.productTypes.get(productKey)
+      if (communityProduct) {
+        communityProduct.count += 1
+      } else {
+        community.productTypes.set(productKey, {
+          productId: row.product_id,
+          productName,
+          count: 1,
+        })
+      }
+    }
+
+    const byCommunity = Array.from(communityMap.values()).map((item) => ({
+      communityId: item.communityId,
+      total: item.total,
+      productTypes: Array.from(item.productTypes.values()),
+      codes: item.codes,
+    }))
+
+    return res.json({
+      total: rows.length,
+      productTypeCount: productTypeMap.size,
+      productTypes: Array.from(productTypeMap.values()),
+      byCommunity,
+      records: rows.map((row) => ({
+        code: String(row.code ?? '').trim(),
+        productId: row.product_id,
+        productName: row.product_name || row.product_id || '未知礼品',
+        communityId: row.community_id,
+        usedAt: row.used_at,
+        userNickname: row.user_nickname,
+        userPhone: row.user_phone,
+      })),
+    })
+  } catch (error) {
+    console.error('Redeem stats failed:', error)
     return res.status(500).json({ message: '服务器错误，请稍后重试' })
   }
 })

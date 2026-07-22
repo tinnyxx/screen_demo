@@ -3,6 +3,7 @@ import {
   getBoundCommunityId,
 } from '@/config/communities'
 import { login } from '@/services/authApi'
+import { useAppModeStore } from '@/stores/appModeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCommunityStore } from '@/stores/communityStore'
 import styles from './Login.module.scss'
@@ -11,6 +12,7 @@ export function LoginPage() {
   const setUser = useAuthStore((state) => state.setUser)
   const setCommunityId = useCommunityStore((state) => state.setCommunityId)
   const clearCommunity = useCommunityStore((state) => state.clearCommunity)
+  const resetMode = useAppModeStore((state) => state.resetMode)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -31,6 +33,7 @@ export function LoginPage() {
         clearCommunity()
       }
 
+      resetMode()
       setUser(user)
     } catch (error) {
       setError(error instanceof Error ? error.message : '登录失败，请稍后重试')

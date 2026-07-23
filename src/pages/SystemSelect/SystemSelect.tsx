@@ -1,3 +1,4 @@
+import { ParticleBackground } from '@/components/effects/ParticleBackground/ParticleBackground'
 import { useAppModeStore } from '@/stores/appModeStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useCommunityStore } from '@/stores/communityStore'
@@ -18,6 +19,7 @@ export function SystemSelectPage() {
 
   return (
     <div className={styles.page}>
+      <ParticleBackground />
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>选择系统</h1>

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ParticleBackground } from '@/components/effects/ParticleBackground/ParticleBackground'
 import {
   getBoundCommunityId,
 } from '@/config/communities'
@@ -44,6 +45,7 @@ export function LoginPage() {
 
   return (
     <div className={styles.page}>
+      <ParticleBackground />
       <form className={styles.card} onSubmit={handleSubmit}>
         <h1 className={styles.title}>瓴界·数据监测平台</h1>
         <p className={styles.subtitle}>FURRYZONE DATA MONITORING PLATFORM</p>

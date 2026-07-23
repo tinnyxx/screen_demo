@@ -1,3 +1,4 @@
+import { ParticleBackground } from '@/components/effects/ParticleBackground/ParticleBackground'
 import {
   communities,
   type CommunityId,
@@ -32,6 +33,7 @@ export function CommunitySelectPage() {
 
   return (
     <div className={styles.page}>
+      <ParticleBackground />
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>选择小区</h1>

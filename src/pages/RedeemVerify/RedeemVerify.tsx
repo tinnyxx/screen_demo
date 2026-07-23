@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { ParticleBackground } from '@/components/effects/ParticleBackground/ParticleBackground'
 import {
   CHECKOUT_USERNAME,
   communities,
@@ -199,6 +200,7 @@ export function RedeemVerifyPage() {
 
   return (
     <div className={styles.page}>
+      <ParticleBackground />
       <div className={`${styles.card} ${isRoot ? styles.cardWide : ''}`}>
         <div className={styles.header}>
           <div className={styles.titleBlock}>

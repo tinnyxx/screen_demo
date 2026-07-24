@@ -1,9 +1,9 @@
-import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { useLiveCommunityMocks } from '@/hooks/useLiveCommunityMocks'
 import { EquipmentStatusChart } from './EquipmentStatusChart'
 import styles from './EquipmentStatusPanel.module.scss'
 
 export function EquipmentStatusPanel() {
-  const mocks = useCommunityMocks()
+  const mocks = useLiveCommunityMocks()
   if (!mocks) return null
 
   const { runningLabel, runningCount, legend } = mocks.equipmentStatus

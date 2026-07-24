@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { useLiveCommunityMocks } from '@/hooks/useLiveCommunityMocks'
 import {
   getMetricColor,
   resolveDeviceStatus,
@@ -63,7 +63,7 @@ function DeviceRow({
 }
 
 export function OperationStatusPanel() {
-  const mocks = useCommunityMocks()
+  const mocks = useLiveCommunityMocks()
   const scrollRef = useRef<HTMLDivElement>(null)
   const pausedRef = useRef(false)
   const scrollRemainderRef = useRef(0)

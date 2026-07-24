@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { getAllDeviceStatuses } from './onenet.js'
 import { sql } from './start.js'
 
 const app = express()
@@ -12,6 +13,16 @@ const distDir = path.resolve(__dirname, '../dist')
 
 app.use(cors())
 app.use(express.json())
+
+app.get('/api/devices/status', async (_req, res) => {
+  try {
+    const data = await getAllDeviceStatuses()
+    return res.json(data)
+  } catch (error) {
+    console.error('OneNET device status failed:', error)
+    return res.status(503).json({ message: '设备状态服务暂时不可用' })
+  }
+})
 
 app.get('/api/weather', async (req, res) => {
   try {

@@ -70,8 +70,10 @@ export function UsageStatusChart({ data }: UsageStatusChartProps) {
       yAxis: {
         type: 'value',
         min: 0,
-        max: 20,
-        interval: 5,
+        max: data.yAxisLabels[data.yAxisLabels.length - 1] ?? 20,
+        interval: data.yAxisLabels.length > 1
+          ? (data.yAxisLabels[1] ?? 5)
+          : 5,
         axisLine: { show: false },
         axisTick: { show: false },
         axisLabel: {

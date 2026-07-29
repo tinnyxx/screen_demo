@@ -4,6 +4,14 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { getAllDeviceStatuses } from './onenet.js'
 import { sql } from './start.js'
+import {
+  getCheckinDashboardStats,
+  getHourlyStats,
+  getMonthlyTotal,
+  getTodayTotal,
+  normalizeCommunityId,
+  VALID_COMMUNITY_IDS,
+} from './dashboard.js'
 
 const app = express()
 const PORT = Number(process.env.PORT || 3001)
@@ -13,6 +21,86 @@ const distDir = path.resolve(__dirname, '../dist')
 
 app.use(cors())
 app.use(express.json())
+
+function parseCommunityId(raw) {
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    return { ok: true, communityId: null }
+  }
+  const communityId = normalizeCommunityId(raw)
+  if (!communityId) {
+    return {
+      ok: false,
+      message: `无效小区，可选：${[...VALID_COMMUNITY_IDS].join(' / ')}`,
+    }
+  }
+  return { ok: true, communityId }
+}
+
+app.get('/api/dashboard/hourly', async (req, res) => {
+  const parsed = parseCommunityId(req.query.communityId)
+  if (!parsed.ok) {
+    return res.status(400).json({ message: parsed.message })
+  }
+
+  try {
+    const data = await getHourlyStats(parsed.communityId)
+    return res.json(data)
+  } catch (error) {
+    console.error('Dashboard hourly failed:', error)
+    return res.status(500).json({ message: '打卡小时统计查询失败' })
+  }
+})
+
+app.get('/api/dashboard/today-total', async (req, res) => {
+  const parsed = parseCommunityId(req.query.communityId)
+  if (!parsed.ok) {
+    return res.status(400).json({ message: parsed.message })
+  }
+
+  try {
+    const data = await getTodayTotal(parsed.communityId)
+    return res.json(data)
+  } catch (error) {
+    console.error('Dashboard today-total failed:', error)
+    return res.status(500).json({ message: '今日打卡统计查询失败' })
+  }
+})
+
+app.get('/api/dashboard/monthly-total', async (req, res) => {
+  const parsed = parseCommunityId(req.query.communityId)
+  if (!parsed.ok) {
+    return res.status(400).json({ message: parsed.message })
+  }
+
+  const month = req.query.month ? String(req.query.month).trim() : null
+  if (month && !/^\d{4}-\d{2}$/.test(month)) {
+    return res.status(400).json({ message: 'month 格式应为 YYYY-MM' })
+  }
+
+  try {
+    const data = await getMonthlyTotal(month, parsed.communityId)
+    return res.json(data)
+  } catch (error) {
+    console.error('Dashboard monthly-total failed:', error)
+    return res.status(500).json({ message: '月累计打卡统计查询失败' })
+  }
+})
+
+/** 大屏聚合：小时曲线 + 今日总计 + 上月累计（推荐 30s～1min 轮询） */
+app.get('/api/dashboard/checkin-stats', async (req, res) => {
+  const parsed = parseCommunityId(req.query.communityId)
+  if (!parsed.ok) {
+    return res.status(400).json({ message: parsed.message })
+  }
+
+  try {
+    const data = await getCheckinDashboardStats(parsed.communityId)
+    return res.json(data)
+  } catch (error) {
+    console.error('Dashboard checkin-stats failed:', error)
+    return res.status(500).json({ message: '打卡统计查询失败' })
+  }
+})
 
 app.get('/api/devices/status', async (_req, res) => {
   try {
@@ -80,13 +168,6 @@ app.post('/api/auth/login', async (req, res) => {
 
 function normalizeRedeemCode(raw) {
   return String(raw ?? '').trim()
-}
-
-const VALID_COMMUNITY_IDS = new Set(['lanwan', 'huarun'])
-
-function normalizeCommunityId(raw) {
-  const value = String(raw ?? '').trim()
-  return VALID_COMMUNITY_IDS.has(value) ? value : null
 }
 
 function mapRedeemCodeRow(row) {

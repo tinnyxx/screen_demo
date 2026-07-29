@@ -26,6 +26,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/api/dashboard': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
       '/api/weather': {
         target: 'https://uapis.cn',
         changeOrigin: true,

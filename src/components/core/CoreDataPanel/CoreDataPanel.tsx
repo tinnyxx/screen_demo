@@ -1,15 +1,34 @@
+import { useMemo } from 'react'
 import { useCommunityMocks } from '@/hooks/useActiveCommunity'
-import { compareTrendMeta } from '@/mock/coreData'
+import { useDashboardCheckinStats } from '@/hooks/useDashboardCheckinStats'
+import { compareTrendMeta, type CoreDataColumn } from '@/mock/coreData'
 import styles from './CoreDataPanel.module.scss'
 
 export function CoreDataPanel() {
   const mocks = useCommunityMocks()
-  if (!mocks) return null
+  const stats = useDashboardCheckinStats()
+
+  const columns = useMemo<CoreDataColumn[] | null>(() => {
+    if (!mocks) return null
+
+    return mocks.coreData.columns.map((column) => {
+      if (column.key !== 'checkin' || !stats) return column
+
+      return {
+        ...column,
+        value: String(stats.todayTotal),
+        comparePercent: stats.comparePercent,
+        trend: stats.trend,
+      }
+    })
+  }, [mocks, stats])
+
+  if (!columns) return null
 
   return (
     <div className={styles.panel}>
       <div className={styles.columns}>
-        {mocks.coreData.columns.map((column, index) => {
+        {columns.map((column, index) => {
           const trendMeta = compareTrendMeta[column.trend]
 
           return (

@@ -49,8 +49,13 @@ CREATE TABLE IF NOT EXISTS pet_devices (
     radius_m            INTEGER NOT NULL DEFAULT 300,
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,
     onenet_device_name  VARCHAR(64),                   -- OneNET 设备名，扫码/NFC 体温校验用
+    community_id        VARCHAR(32),                   -- 所属小区：lanwan | huarun（大屏按小区统计）
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 已有库升级：
+-- ALTER TABLE pet_devices ADD COLUMN IF NOT EXISTS community_id VARCHAR(32);
+CREATE INDEX IF NOT EXISTS idx_pet_devices_community ON pet_devices(community_id);
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON pet_devices TO myapp;
 
@@ -68,11 +73,17 @@ CREATE TABLE IF NOT EXISTS checkin_records (
     checkin_count   INTEGER NOT NULL DEFAULT 1,          -- 当天第几次打卡
     checkin_date    DATE NOT NULL,                       -- 打卡日期 YYYY-MM-DD
     checkin_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 打卡时间戳
+    status          VARCHAR(20) DEFAULT 'success',       -- success | fail
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 已有库升级：
+-- ALTER TABLE checkin_records ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'success';
+
 -- 按用户+日期查当日打卡次数，最频繁的查询
 CREATE INDEX IF NOT EXISTS idx_checkin_user_date ON checkin_records(user_id, checkin_date);
+-- 大屏按日/状态聚合
+CREATE INDEX IF NOT EXISTS idx_checkin_date_status ON checkin_records(checkin_date, status);
 
 -- ============================================
 -- 5. 积分流水表

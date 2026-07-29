@@ -1,13 +1,16 @@
+import { useMemo } from 'react'
 import baogaoNiaoyeIcon from '@/assets/baogao_niaoye.png'
 import baogaoDakaIcon from '@/assets/baogao_daka.png'
 import baogaoJieshuiIcon from '@/assets/baogao_jieshui.png'
 import baogaoAnniuIcon from '@/assets/baogao_anniu.png'
 import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { useDashboardCheckinStats } from '@/hooks/useDashboardCheckinStats'
 import {
   formatReportValue,
   getMonthlyReportCardItems,
   getReportDynamicTarget,
   getReportProgress,
+  type MonthlyReportData,
   type MonthlyReportItem,
 } from '@/mock/monthlyReport'
 import { generateAndDownloadReportImage } from '@/utils/generateReportImage'
@@ -19,11 +22,45 @@ const itemIcons: Record<MonthlyReportItem['key'], string> = {
   'water-saving': baogaoJieshuiIcon,
 }
 
+function parseYearMonth(monthKey: string) {
+  const [yearText, monthText] = monthKey.split('-')
+  return {
+    year: Number(yearText) || new Date().getFullYear(),
+    month: Number(monthText) || 1,
+  }
+}
+
 export function MonthlyReportPanel() {
   const mocks = useCommunityMocks()
-  if (!mocks) return null
+  const stats = useDashboardCheckinStats()
 
-  const { monthlyReport } = mocks
+  const monthlyReport = useMemo<MonthlyReportData | null>(() => {
+    if (!mocks) return null
+
+    const base = mocks.monthlyReport
+    if (!stats) return base
+
+    const { year, month } = parseYearMonth(stats.lastMonth)
+
+    return {
+      ...base,
+      meta: {
+        ...base.meta,
+        year,
+        month,
+      },
+      items: base.items.map((item) => {
+        if (item.key !== 'checkin') return item
+        return {
+          ...item,
+          current: stats.lastMonthTotal,
+        }
+      }),
+    }
+  }, [mocks, stats])
+
+  if (!monthlyReport) return null
+
   const { actionLabel } = monthlyReport
   const items = getMonthlyReportCardItems(monthlyReport)
 

@@ -8,22 +8,21 @@ export function normalizeCommunityId(raw) {
 }
 
 /**
- * 按小区过滤：
- * communities.code = lanwan|huarun
- * → pet_devices.community_id（整数 FK）
- * → checkin_records.device_id = pet_devices.id
+ * 大屏 communityId（lanwan|huarun）→ pet_devices.id 列表
+ * communities.code → pet_devices.community_id（整数 FK）
  */
-function communityDeviceFilter(communityId) {
-  if (!communityId) return sql``
-  return sql`
-    AND device_id IN (
-      SELECT d.id
-      FROM pet_devices d
-      INNER JOIN communities c ON c.id = d.community_id
-      WHERE c.code = ${communityId}
-        AND d.is_active IS DISTINCT FROM FALSE
-    )
+async function resolveCommunityDeviceIds(communityId) {
+  if (!communityId) return null
+
+  const rows = await sql`
+    SELECT d.id
+    FROM pet_devices d
+    INNER JOIN communities c ON c.id = d.community_id
+    WHERE c.code = ${communityId}
+      AND COALESCE(d.is_active, TRUE) = TRUE
   `
+
+  return rows.map((row) => String(row.id))
 }
 
 function fillHourlyCounts(rows) {
@@ -34,16 +33,32 @@ function fillHourlyCounts(rows) {
   }))
 }
 
-async function queryHourlyForOffset(dayOffset, communityId) {
-  const rows = await sql`
-    SELECT EXTRACT(HOUR FROM checkin_time AT TIME ZONE 'Asia/Shanghai')::int AS hour,
-           COUNT(*)::int AS count
-    FROM checkin_records
-    WHERE checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - ${dayOffset}
-      AND COALESCE(status, 'success') = 'success'
-      ${communityDeviceFilter(communityId)}
-    GROUP BY 1
-  `
+async function queryHourlyForOffset(dayOffset, deviceIds) {
+  // deviceIds === null → 全局；[] → 该小区无设备，直接全 0
+  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
+    return fillHourlyCounts([])
+  }
+
+  const rows =
+    deviceIds === null
+      ? await sql`
+          SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
+                 COUNT(*)::int AS count
+          FROM checkin_records
+          WHERE checkin_date = ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - ${dayOffset}::int)
+            AND COALESCE(status, 'success') = 'success'
+          GROUP BY 1
+        `
+      : await sql`
+          SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
+                 COUNT(*)::int AS count
+          FROM checkin_records
+          WHERE checkin_date = ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - ${dayOffset}::int)
+            AND COALESCE(status, 'success') = 'success'
+            AND device_id = ANY(${deviceIds})
+          GROUP BY 1
+        `
+
   return fillHourlyCounts(rows)
 }
 
@@ -62,9 +77,10 @@ export async function getShanghaiDates() {
 
 export async function getHourlyStats(communityId = null) {
   const { today, yesterday } = await getShanghaiDates()
+  const deviceIds = await resolveCommunityDeviceIds(communityId)
   const [todayHourly, yesterdayHourly] = await Promise.all([
-    queryHourlyForOffset(0, communityId),
-    queryHourlyForOffset(1, communityId),
+    queryHourlyForOffset(0, deviceIds),
+    queryHourlyForOffset(1, deviceIds),
   ])
   return { today, yesterday, todayHourly, yesterdayHourly }
 }
@@ -73,24 +89,54 @@ export async function getTodayTotal(communityId = null) {
   const [{ today }] = await sql`
     SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date::text AS today
   `
-  const [row] = await sql`
-    SELECT COUNT(*)::int AS total
-    FROM checkin_records
-    WHERE checkin_date = ${today}::date
-      AND COALESCE(status, 'success') = 'success'
-      ${communityDeviceFilter(communityId)}
-  `
+  const deviceIds = await resolveCommunityDeviceIds(communityId)
+
+  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
+    return { date: today, total: 0 }
+  }
+
+  const [row] =
+    deviceIds === null
+      ? await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date = ${today}::date
+            AND COALESCE(status, 'success') = 'success'
+        `
+      : await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date = ${today}::date
+            AND COALESCE(status, 'success') = 'success'
+            AND device_id = ANY(${deviceIds})
+        `
+
   return { date: today, total: Number(row?.total) || 0 }
 }
 
 export async function getYesterdayTotal(communityId = null) {
-  const [row] = await sql`
-    SELECT COUNT(*)::int AS total
-    FROM checkin_records
-    WHERE checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - 1
-      AND COALESCE(status, 'success') = 'success'
-      ${communityDeviceFilter(communityId)}
-  `
+  const deviceIds = await resolveCommunityDeviceIds(communityId)
+
+  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
+    return 0
+  }
+
+  const [row] =
+    deviceIds === null
+      ? await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - 1
+            AND COALESCE(status, 'success') = 'success'
+        `
+      : await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - 1
+            AND COALESCE(status, 'success') = 'success'
+            AND device_id = ANY(${deviceIds})
+        `
+
   return Number(row?.total) || 0
 }
 
@@ -104,14 +150,29 @@ export async function getMonthlyTotal(month, communityId = null) {
   }
 
   const startDate = `${monthKey}-01`
-  const [row] = await sql`
-    SELECT COUNT(*)::int AS total
-    FROM checkin_records
-    WHERE checkin_date >= ${startDate}::date
-      AND checkin_date < (${startDate}::date + INTERVAL '1 month')
-      AND COALESCE(status, 'success') = 'success'
-      ${communityDeviceFilter(communityId)}
-  `
+  const deviceIds = await resolveCommunityDeviceIds(communityId)
+
+  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
+    return { month: monthKey, total: 0 }
+  }
+
+  const [row] =
+    deviceIds === null
+      ? await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date >= ${startDate}::date
+            AND checkin_date < (${startDate}::date + INTERVAL '1 month')
+            AND COALESCE(status, 'success') = 'success'
+        `
+      : await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date >= ${startDate}::date
+            AND checkin_date < (${startDate}::date + INTERVAL '1 month')
+            AND COALESCE(status, 'success') = 'success'
+            AND device_id = ANY(${deviceIds})
+        `
 
   return {
     month: monthKey,

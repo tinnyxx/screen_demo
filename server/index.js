@@ -47,7 +47,10 @@ app.get('/api/dashboard/hourly', async (req, res) => {
     return res.json(data)
   } catch (error) {
     console.error('Dashboard hourly failed:', error)
-    return res.status(500).json({ message: '打卡小时统计查询失败' })
+    return res.status(500).json({
+      message: '打卡小时统计查询失败',
+      detail: error?.message ?? String(error),
+    })
   }
 })
 
@@ -62,7 +65,10 @@ app.get('/api/dashboard/today-total', async (req, res) => {
     return res.json(data)
   } catch (error) {
     console.error('Dashboard today-total failed:', error)
-    return res.status(500).json({ message: '今日打卡统计查询失败' })
+    return res.status(500).json({
+      message: '今日打卡统计查询失败',
+      detail: error?.message ?? String(error),
+    })
   }
 })
 
@@ -82,7 +88,10 @@ app.get('/api/dashboard/monthly-total', async (req, res) => {
     return res.json(data)
   } catch (error) {
     console.error('Dashboard monthly-total failed:', error)
-    return res.status(500).json({ message: '月累计打卡统计查询失败' })
+    return res.status(500).json({
+      message: '月累计打卡统计查询失败',
+      detail: error?.message ?? String(error),
+    })
   }
 })
 
@@ -98,10 +107,12 @@ app.get('/api/dashboard/checkin-stats', async (req, res) => {
     return res.json(data)
   } catch (error) {
     console.error('Dashboard checkin-stats failed:', error)
-    return res.status(500).json({ message: '打卡统计查询失败' })
+    return res.status(500).json({
+      message: '打卡统计查询失败',
+      detail: error?.message ?? String(error),
+    })
   }
 })
-
 app.get('/api/devices/status', async (_req, res) => {
   try {
     const data = await getAllDeviceStatuses()

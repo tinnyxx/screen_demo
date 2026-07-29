@@ -9,7 +9,8 @@ export function normalizeCommunityId(raw) {
 
 /**
  * 解析小区 code → 设备 id 列表
- * communities.code → pet_devices.community_id(int) → pet_devices.id
+ * communities.code → pet_devices.community_id → pet_devices.id
+ * 用 ::text 比较，避免 integer / varchar 类型不一致导致 500
  */
 async function getCommunityDeviceIds(communityId) {
   if (!communityId) return null
@@ -17,8 +18,11 @@ async function getCommunityDeviceIds(communityId) {
   const rows = await sql`
     SELECT d.id
     FROM pet_devices d
-    INNER JOIN communities c ON c.id = d.community_id
-    WHERE c.code = ${communityId}
+    WHERE d.community_id::text IN (
+      SELECT c.id::text
+      FROM communities c
+      WHERE c.code = ${communityId}
+    )
       AND COALESCE(d.is_active, TRUE) = TRUE
   `
 
@@ -34,6 +38,10 @@ function fillHourlyCounts(rows) {
 }
 
 async function queryHourlyForDate(dateText, deviceIds) {
+  if (deviceIds !== null && deviceIds.length === 0) {
+    return fillHourlyCounts([])
+  }
+
   const rows =
     deviceIds === null
       ? await sql`
@@ -44,17 +52,15 @@ async function queryHourlyForDate(dateText, deviceIds) {
             AND COALESCE(status, 'success') = 'success'
           GROUP BY 1
         `
-      : deviceIds.length === 0
-        ? []
-        : await sql`
-            SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
-                   COUNT(*)::int AS count
-            FROM checkin_records
-            WHERE checkin_date = ${dateText}::date
-              AND COALESCE(status, 'success') = 'success'
-              AND device_id = ANY(${deviceIds})
-            GROUP BY 1
-          `
+      : await sql`
+          SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
+                 COUNT(*)::int AS count
+          FROM checkin_records
+          WHERE checkin_date = ${dateText}::date
+            AND COALESCE(status, 'success') = 'success'
+            AND device_id IN ${sql(deviceIds)}
+          GROUP BY 1
+        `
 
   return fillHourlyCounts(rows)
 }
@@ -70,16 +76,6 @@ export async function getShanghaiDates() {
       ) AS last_month
   `
   return row
-}
-
-export async function getHourlyStats(communityId = null) {
-  const { today, yesterday } = await getShanghaiDates()
-  const deviceIds = await getCommunityDeviceIds(communityId)
-  const [todayHourly, yesterdayHourly] = await Promise.all([
-    queryHourlyForDate(today, deviceIds),
-    queryHourlyForDate(yesterday, deviceIds),
-  ])
-  return { today, yesterday, todayHourly, yesterdayHourly }
 }
 
 async function countSuccessOnDate(dateText, deviceIds) {
@@ -98,10 +94,46 @@ async function countSuccessOnDate(dateText, deviceIds) {
           FROM checkin_records
           WHERE checkin_date = ${dateText}::date
             AND COALESCE(status, 'success') = 'success'
-            AND device_id = ANY(${deviceIds})
+            AND device_id IN ${sql(deviceIds)}
         `
 
   return Number(row?.total) || 0
+}
+
+async function countSuccessInMonth(monthKey, deviceIds) {
+  const startDate = `${monthKey}-01`
+
+  if (deviceIds !== null && deviceIds.length === 0) return 0
+
+  const [row] =
+    deviceIds === null
+      ? await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date >= ${startDate}::date
+            AND checkin_date < (${startDate}::date + INTERVAL '1 month')
+            AND COALESCE(status, 'success') = 'success'
+        `
+      : await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE checkin_date >= ${startDate}::date
+            AND checkin_date < (${startDate}::date + INTERVAL '1 month')
+            AND COALESCE(status, 'success') = 'success'
+            AND device_id IN ${sql(deviceIds)}
+        `
+
+  return Number(row?.total) || 0
+}
+
+export async function getHourlyStats(communityId = null) {
+  const { today, yesterday } = await getShanghaiDates()
+  const deviceIds = await getCommunityDeviceIds(communityId)
+  const [todayHourly, yesterdayHourly] = await Promise.all([
+    queryHourlyForDate(today, deviceIds),
+    queryHourlyForDate(yesterday, deviceIds),
+  ])
+  return { today, yesterday, todayHourly, yesterdayHourly }
 }
 
 export async function getTodayTotal(communityId = null) {
@@ -129,32 +161,6 @@ export async function getMonthlyTotal(month, communityId = null) {
   const deviceIds = await getCommunityDeviceIds(communityId)
   const total = await countSuccessInMonth(monthKey, deviceIds)
   return { month: monthKey, total }
-}
-
-async function countSuccessInMonth(monthKey, deviceIds) {
-  const startDate = `${monthKey}-01`
-
-  if (deviceIds !== null && deviceIds.length === 0) return 0
-
-  const [row] =
-    deviceIds === null
-      ? await sql`
-          SELECT COUNT(*)::int AS total
-          FROM checkin_records
-          WHERE checkin_date >= ${startDate}::date
-            AND checkin_date < (${startDate}::date + INTERVAL '1 month')
-            AND COALESCE(status, 'success') = 'success'
-        `
-      : await sql`
-          SELECT COUNT(*)::int AS total
-          FROM checkin_records
-          WHERE checkin_date >= ${startDate}::date
-            AND checkin_date < (${startDate}::date + INTERVAL '1 month')
-            AND COALESCE(status, 'success') = 'success'
-            AND device_id = ANY(${deviceIds})
-        `
-
-  return Number(row?.total) || 0
 }
 
 /** 大屏一轮询：小时曲线 + 今日总计 + 上月累计 */

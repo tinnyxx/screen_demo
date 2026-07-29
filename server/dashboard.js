@@ -8,10 +8,10 @@ export function normalizeCommunityId(raw) {
 }
 
 /**
- * 大屏 communityId（lanwan|huarun）→ pet_devices.id 列表
- * communities.code → pet_devices.community_id（整数 FK）
+ * 解析小区 code → 设备 id 列表
+ * communities.code → pet_devices.community_id(int) → pet_devices.id
  */
-async function resolveCommunityDeviceIds(communityId) {
+async function getCommunityDeviceIds(communityId) {
   if (!communityId) return null
 
   const rows = await sql`
@@ -33,31 +33,28 @@ function fillHourlyCounts(rows) {
   }))
 }
 
-async function queryHourlyForOffset(dayOffset, deviceIds) {
-  // deviceIds === null → 全局；[] → 该小区无设备，直接全 0
-  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
-    return fillHourlyCounts([])
-  }
-
+async function queryHourlyForDate(dateText, deviceIds) {
   const rows =
     deviceIds === null
       ? await sql`
           SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
                  COUNT(*)::int AS count
           FROM checkin_records
-          WHERE checkin_date = ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - ${dayOffset}::int)
+          WHERE checkin_date = ${dateText}::date
             AND COALESCE(status, 'success') = 'success'
           GROUP BY 1
         `
-      : await sql`
-          SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
-                 COUNT(*)::int AS count
-          FROM checkin_records
-          WHERE checkin_date = ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - ${dayOffset}::int)
-            AND COALESCE(status, 'success') = 'success'
-            AND device_id = ANY(${deviceIds})
-          GROUP BY 1
-        `
+      : deviceIds.length === 0
+        ? []
+        : await sql`
+            SELECT EXTRACT(HOUR FROM checkin_time)::int AS hour,
+                   COUNT(*)::int AS count
+            FROM checkin_records
+            WHERE checkin_date = ${dateText}::date
+              AND COALESCE(status, 'success') = 'success'
+              AND device_id = ANY(${deviceIds})
+            GROUP BY 1
+          `
 
   return fillHourlyCounts(rows)
 }
@@ -77,67 +74,47 @@ export async function getShanghaiDates() {
 
 export async function getHourlyStats(communityId = null) {
   const { today, yesterday } = await getShanghaiDates()
-  const deviceIds = await resolveCommunityDeviceIds(communityId)
+  const deviceIds = await getCommunityDeviceIds(communityId)
   const [todayHourly, yesterdayHourly] = await Promise.all([
-    queryHourlyForOffset(0, deviceIds),
-    queryHourlyForOffset(1, deviceIds),
+    queryHourlyForDate(today, deviceIds),
+    queryHourlyForDate(yesterday, deviceIds),
   ])
   return { today, yesterday, todayHourly, yesterdayHourly }
 }
 
-export async function getTodayTotal(communityId = null) {
-  const [{ today }] = await sql`
-    SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date::text AS today
-  `
-  const deviceIds = await resolveCommunityDeviceIds(communityId)
-
-  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
-    return { date: today, total: 0 }
-  }
+async function countSuccessOnDate(dateText, deviceIds) {
+  if (deviceIds !== null && deviceIds.length === 0) return 0
 
   const [row] =
     deviceIds === null
       ? await sql`
           SELECT COUNT(*)::int AS total
           FROM checkin_records
-          WHERE checkin_date = ${today}::date
+          WHERE checkin_date = ${dateText}::date
             AND COALESCE(status, 'success') = 'success'
         `
       : await sql`
           SELECT COUNT(*)::int AS total
           FROM checkin_records
-          WHERE checkin_date = ${today}::date
-            AND COALESCE(status, 'success') = 'success'
-            AND device_id = ANY(${deviceIds})
-        `
-
-  return { date: today, total: Number(row?.total) || 0 }
-}
-
-export async function getYesterdayTotal(communityId = null) {
-  const deviceIds = await resolveCommunityDeviceIds(communityId)
-
-  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
-    return 0
-  }
-
-  const [row] =
-    deviceIds === null
-      ? await sql`
-          SELECT COUNT(*)::int AS total
-          FROM checkin_records
-          WHERE checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - 1
-            AND COALESCE(status, 'success') = 'success'
-        `
-      : await sql`
-          SELECT COUNT(*)::int AS total
-          FROM checkin_records
-          WHERE checkin_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai')::date - 1
+          WHERE checkin_date = ${dateText}::date
             AND COALESCE(status, 'success') = 'success'
             AND device_id = ANY(${deviceIds})
         `
 
   return Number(row?.total) || 0
+}
+
+export async function getTodayTotal(communityId = null) {
+  const { today } = await getShanghaiDates()
+  const deviceIds = await getCommunityDeviceIds(communityId)
+  const total = await countSuccessOnDate(today, deviceIds)
+  return { date: today, total }
+}
+
+export async function getYesterdayTotal(communityId = null) {
+  const { yesterday } = await getShanghaiDates()
+  const deviceIds = await getCommunityDeviceIds(communityId)
+  return countSuccessOnDate(yesterday, deviceIds)
 }
 
 /** month: 'YYYY-MM'；缺省为上海时区上月 */
@@ -149,12 +126,15 @@ export async function getMonthlyTotal(month, communityId = null) {
     monthKey = dates.last_month
   }
 
-  const startDate = `${monthKey}-01`
-  const deviceIds = await resolveCommunityDeviceIds(communityId)
+  const deviceIds = await getCommunityDeviceIds(communityId)
+  const total = await countSuccessInMonth(monthKey, deviceIds)
+  return { month: monthKey, total }
+}
 
-  if (Array.isArray(deviceIds) && deviceIds.length === 0) {
-    return { month: monthKey, total: 0 }
-  }
+async function countSuccessInMonth(monthKey, deviceIds) {
+  const startDate = `${monthKey}-01`
+
+  if (deviceIds !== null && deviceIds.length === 0) return 0
 
   const [row] =
     deviceIds === null
@@ -174,42 +154,46 @@ export async function getMonthlyTotal(month, communityId = null) {
             AND device_id = ANY(${deviceIds})
         `
 
-  return {
-    month: monthKey,
-    total: Number(row?.total) || 0,
-  }
+  return Number(row?.total) || 0
 }
 
 /** 大屏一轮询：小时曲线 + 今日总计 + 上月累计 */
 export async function getCheckinDashboardStats(communityId = null) {
-  const [hourly, todayTotal, yesterdayTotal, monthly] = await Promise.all([
-    getHourlyStats(communityId),
-    getTodayTotal(communityId),
-    getYesterdayTotal(communityId),
-    getMonthlyTotal(null, communityId),
-  ])
+  const dates = await getShanghaiDates()
+  const deviceIds = await getCommunityDeviceIds(communityId)
 
-  const today = todayTotal.total
-  const yesterday = yesterdayTotal
+  const [todayHourly, yesterdayHourly, todayTotal, yesterdayTotal, lastMonthTotal] =
+    await Promise.all([
+      queryHourlyForDate(dates.today, deviceIds),
+      queryHourlyForDate(dates.yesterday, deviceIds),
+      countSuccessOnDate(dates.today, deviceIds),
+      countSuccessOnDate(dates.yesterday, deviceIds),
+      countSuccessInMonth(dates.last_month, deviceIds),
+    ])
+
   let comparePercent = 0
   let trend = 'up'
 
-  if (yesterday > 0) {
-    comparePercent = Number((((today - yesterday) / yesterday) * 100).toFixed(1))
-    trend = today >= yesterday ? 'up' : 'down'
-  } else if (today > 0) {
+  if (yesterdayTotal > 0) {
+    comparePercent = Number((((todayTotal - yesterdayTotal) / yesterdayTotal) * 100).toFixed(1))
+    trend = todayTotal >= yesterdayTotal ? 'up' : 'down'
+  } else if (todayTotal > 0) {
     comparePercent = 100
     trend = 'up'
   }
 
   return {
     communityId,
-    ...hourly,
-    todayTotal: todayTotal.total,
-    yesterdayTotal: yesterday,
+    today: dates.today,
+    yesterday: dates.yesterday,
+    todayHourly,
+    yesterdayHourly,
+    todayTotal,
+    yesterdayTotal,
     comparePercent: Math.abs(comparePercent),
     trend,
-    lastMonth: monthly.month,
-    lastMonthTotal: monthly.total,
+    lastMonth: dates.last_month,
+    lastMonthTotal,
+    deviceCount: deviceIds === null ? null : deviceIds.length,
   }
 }

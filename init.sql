@@ -39,7 +39,28 @@ CREATE TABLE IF NOT EXISTS user_pets (
 );
 
 -- ============================================
--- 3. 打卡桩设备表
+-- 3. 小区表
+-- ============================================
+CREATE TABLE IF NOT EXISTS communities (
+    id              SERIAL PRIMARY KEY,
+    code            VARCHAR(32) UNIQUE NOT NULL,         -- lanwan | huarun（大屏 communityId）
+    name            VARCHAR(100) NOT NULL,
+    latitude        NUMERIC(12,8),
+    longitude       NUMERIC(12,8),
+    radius_m        INTEGER NOT NULL DEFAULT 100,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO communities (id, code, name, latitude, longitude, radius_m)
+VALUES
+  (1, 'huarun', '华润小区', 22.74837300, 113.91219700, 100),
+  (2, 'lanwan', '蓝湾小区', 22.55759400, 113.86765200, 100)
+ON CONFLICT (code) DO NOTHING;
+
+-- ============================================
+-- 4. 打卡桩设备表
 -- ============================================
 CREATE TABLE IF NOT EXISTS pet_devices (
     id                  VARCHAR(64) PRIMARY KEY,
@@ -49,23 +70,21 @@ CREATE TABLE IF NOT EXISTS pet_devices (
     radius_m            INTEGER NOT NULL DEFAULT 300,
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,
     onenet_device_name  VARCHAR(64),                   -- OneNET 设备名，扫码/NFC 体温校验用
-    community_id        VARCHAR(32),                   -- 所属小区：lanwan | huarun（大屏按小区统计）
+    community_id        INTEGER REFERENCES communities(id), -- 所属小区（整数 FK）
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 已有库升级：
--- ALTER TABLE pet_devices ADD COLUMN IF NOT EXISTS community_id VARCHAR(32);
 CREATE INDEX IF NOT EXISTS idx_pet_devices_community ON pet_devices(community_id);
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON pet_devices TO myapp;
 
 -- ============================================
--- 4. 打卡记录表
+-- 5. 打卡记录表
 -- ============================================
 CREATE TABLE IF NOT EXISTS checkin_records (
     id              SERIAL PRIMARY KEY,
     user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    device_id       VARCHAR(128),                        -- 设备ID
+    device_id       VARCHAR(128),                        -- 对应 pet_devices.id，如 STATION_001
     latitude        NUMERIC(12,8),                       -- 纬度
     longitude       NUMERIC(12,8),                       -- 经度
     points_awarded  INTEGER NOT NULL DEFAULT 0,          -- 本次获得积分 (2~5随机)
@@ -74,11 +93,9 @@ CREATE TABLE IF NOT EXISTS checkin_records (
     checkin_date    DATE NOT NULL,                       -- 打卡日期 YYYY-MM-DD
     checkin_time    TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 打卡时间戳
     status          VARCHAR(20) DEFAULT 'success',       -- success | fail
+    fail_reason     VARCHAR(256),
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- 已有库升级：
--- ALTER TABLE checkin_records ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'success';
 
 -- 按用户+日期查当日打卡次数，最频繁的查询
 CREATE INDEX IF NOT EXISTS idx_checkin_user_date ON checkin_records(user_id, checkin_date);
@@ -86,7 +103,7 @@ CREATE INDEX IF NOT EXISTS idx_checkin_user_date ON checkin_records(user_id, che
 CREATE INDEX IF NOT EXISTS idx_checkin_date_status ON checkin_records(checkin_date, status);
 
 -- ============================================
--- 5. 积分流水表
+-- 6. 积分流水表
 -- ============================================
 CREATE TABLE IF NOT EXISTS point_transactions (
     id              SERIAL PRIMARY KEY,
@@ -102,7 +119,7 @@ CREATE TABLE IF NOT EXISTS point_transactions (
 CREATE INDEX IF NOT EXISTS idx_point_txn_user ON point_transactions(user_id);
 
 -- ============================================
--- 6. 奖品兑换记录表
+-- 7. 奖品兑换记录表
 -- ============================================
 CREATE TABLE IF NOT EXISTS redeem_records (
     id              SERIAL PRIMARY KEY,
@@ -121,7 +138,7 @@ CREATE TABLE IF NOT EXISTS redeem_records (
 CREATE INDEX IF NOT EXISTS idx_redeem_user ON redeem_records(user_id);
 
 -- ============================================
--- 7. 奖品兑换码表
+-- 8. 奖品兑换码表
 -- ============================================
 CREATE TABLE redeem_codes (
     id               SERIAL PRIMARY KEY,
@@ -146,7 +163,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON redeem_codes TO myapp;
 
 
 -- ============================================
--- 8. 管理员账号表
+-- 9. 管理员账号表
 -- ============================================
 CREATE TABLE admin_tb (
     id         SERIAL PRIMARY KEY,

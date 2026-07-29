@@ -8,23 +8,20 @@ export function normalizeCommunityId(raw) {
 }
 
 /**
- * 按小区过滤：打卡 device_id 匹配该小区设备的 id 或 onenet_device_name。
- * 未传 communityId 时查全局。
+ * 按小区过滤：
+ * communities.code = lanwan|huarun
+ * → pet_devices.community_id（整数 FK）
+ * → checkin_records.device_id = pet_devices.id
  */
 function communityDeviceFilter(communityId) {
   if (!communityId) return sql``
   return sql`
-    AND (
-      device_id IN (
-        SELECT id FROM pet_devices WHERE community_id = ${communityId}
-      )
-      OR device_id IN (
-        SELECT onenet_device_name
-        FROM pet_devices
-        WHERE community_id = ${communityId}
-          AND onenet_device_name IS NOT NULL
-          AND TRIM(onenet_device_name) <> ''
-      )
+    AND device_id IN (
+      SELECT d.id
+      FROM pet_devices d
+      INNER JOIN communities c ON c.id = d.community_id
+      WHERE c.code = ${communityId}
+        AND d.is_active IS DISTINCT FROM FALSE
     )
   `
 }

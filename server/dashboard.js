@@ -126,6 +126,26 @@ async function countSuccessInMonth(monthKey, deviceIds) {
   return Number(row?.total) || 0
 }
 
+async function countAllSuccess(deviceIds) {
+  if (deviceIds !== null && deviceIds.length === 0) return 0
+
+  const [row] =
+    deviceIds === null
+      ? await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE COALESCE(status, 'success') = 'success'
+        `
+      : await sql`
+          SELECT COUNT(*)::int AS total
+          FROM checkin_records
+          WHERE COALESCE(status, 'success') = 'success'
+            AND device_id IN ${sql(deviceIds)}
+        `
+
+  return Number(row?.total) || 0
+}
+
 export async function getHourlyStats(communityId = null) {
   const { today, yesterday } = await getShanghaiDates()
   const deviceIds = await getCommunityDeviceIds(communityId)
@@ -163,30 +183,110 @@ export async function getMonthlyTotal(month, communityId = null) {
   return { month: monthKey, total }
 }
 
+/** 每次打卡处理尿液 0.08L */
+const URINE_PER_CHECKIN_L = 0.08
+
+/**
+ * 区间节水（L）：waterout 是设备累计值，取每台设备
+ * 区间结束前最后一条快照 − 区间开始前最后一条快照（无则用区间内第一条）求差后求和。
+ * endText 传 null 表示到当前时刻。
+ */
+async function sumWateroutDelta(deviceIds, startText, endText) {
+  if (deviceIds !== null && deviceIds.length === 0) return 0
+
+  const deviceFilter = deviceIds === null ? sql`TRUE` : sql`device_id IN ${sql(deviceIds)}`
+  const endBoundary = endText === null ? sql`CURRENT_TIMESTAMP` : sql`${endText}::timestamp`
+
+  try {
+    const [row] = await sql`
+      WITH ends AS (
+        SELECT DISTINCT ON (device_id) device_id, waterout
+        FROM device_waterout_readings
+        WHERE ${deviceFilter} AND recorded_at < ${endBoundary}
+        ORDER BY device_id, recorded_at DESC
+      ),
+      starts AS (
+        SELECT DISTINCT ON (device_id) device_id, waterout
+        FROM device_waterout_readings
+        WHERE ${deviceFilter} AND recorded_at < ${startText}::timestamp
+        ORDER BY device_id, recorded_at DESC
+      ),
+      first_in AS (
+        SELECT DISTINCT ON (device_id) device_id, waterout
+        FROM device_waterout_readings
+        WHERE ${deviceFilter}
+          AND recorded_at >= ${startText}::timestamp
+          AND recorded_at < ${endBoundary}
+        ORDER BY device_id, recorded_at ASC
+      )
+      SELECT COALESCE(
+        SUM(GREATEST(e.waterout - COALESCE(s.waterout, f.waterout, e.waterout), 0)),
+        0
+      )::float AS total
+      FROM ends e
+      LEFT JOIN starts s USING (device_id)
+      LEFT JOIN first_in f USING (device_id)
+    `
+    return Number(row?.total) || 0
+  } catch (error) {
+    // device_waterout_readings 未建表时降级为 0
+    console.warn('waterout 区间统计失败:', error.message)
+    return 0
+  }
+}
+
+function compareStats(todayValue, yesterdayValue) {
+  if (yesterdayValue > 0) {
+    const percent = Number(
+      (((todayValue - yesterdayValue) / yesterdayValue) * 100).toFixed(1),
+    )
+    return {
+      comparePercent: Math.abs(percent),
+      trend: todayValue >= yesterdayValue ? 'up' : 'down',
+    }
+  }
+  if (todayValue > 0) {
+    return { comparePercent: 100, trend: 'up' }
+  }
+  return { comparePercent: 0, trend: 'up' }
+}
+
+function roundLiters(value) {
+  return Number(value.toFixed(2))
+}
+
 /** 大屏一轮询：小时曲线 + 今日总计 + 上月累计 */
 export async function getCheckinDashboardStats(communityId = null) {
   const dates = await getShanghaiDates()
   const deviceIds = await getCommunityDeviceIds(communityId)
 
-  const [todayHourly, yesterdayHourly, todayTotal, yesterdayTotal, lastMonthTotal] =
-    await Promise.all([
-      queryHourlyForDate(dates.today, deviceIds),
-      queryHourlyForDate(dates.yesterday, deviceIds),
-      countSuccessOnDate(dates.today, deviceIds),
-      countSuccessOnDate(dates.yesterday, deviceIds),
-      countSuccessInMonth(dates.last_month, deviceIds),
-    ])
+  const thisMonthStart = `${dates.today.slice(0, 7)}-01`
+  const lastMonthStart = `${dates.last_month}-01`
 
-  let comparePercent = 0
-  let trend = 'up'
+  const [
+    todayHourly,
+    yesterdayHourly,
+    todayTotal,
+    yesterdayTotal,
+    lastMonthTotal,
+    totalCheckins,
+    todayWaterSaving,
+    yesterdayWaterSaving,
+    lastMonthWaterSaving,
+  ] = await Promise.all([
+    queryHourlyForDate(dates.today, deviceIds),
+    queryHourlyForDate(dates.yesterday, deviceIds),
+    countSuccessOnDate(dates.today, deviceIds),
+    countSuccessOnDate(dates.yesterday, deviceIds),
+    countSuccessInMonth(dates.last_month, deviceIds),
+    countAllSuccess(deviceIds),
+    sumWateroutDelta(deviceIds, dates.today, null),
+    sumWateroutDelta(deviceIds, dates.yesterday, dates.today),
+    sumWateroutDelta(deviceIds, lastMonthStart, thisMonthStart),
+  ])
 
-  if (yesterdayTotal > 0) {
-    comparePercent = Number((((todayTotal - yesterdayTotal) / yesterdayTotal) * 100).toFixed(1))
-    trend = todayTotal >= yesterdayTotal ? 'up' : 'down'
-  } else if (todayTotal > 0) {
-    comparePercent = 100
-    trend = 'up'
-  }
+  const checkinCompare = compareStats(todayTotal, yesterdayTotal)
+  const waterSavingCompare = compareStats(todayWaterSaving, yesterdayWaterSaving)
 
   return {
     communityId,
@@ -196,10 +296,23 @@ export async function getCheckinDashboardStats(communityId = null) {
     yesterdayHourly,
     todayTotal,
     yesterdayTotal,
-    comparePercent: Math.abs(comparePercent),
-    trend,
+    comparePercent: checkinCompare.comparePercent,
+    trend: checkinCompare.trend,
     lastMonth: dates.last_month,
     lastMonthTotal,
+    totalCheckins,
+    // 尿液按打卡次数 × 0.08L 推算，对比与打卡同步
+    todayUrineLiters: roundLiters(todayTotal * URINE_PER_CHECKIN_L),
+    yesterdayUrineLiters: roundLiters(yesterdayTotal * URINE_PER_CHECKIN_L),
+    lastMonthUrineLiters: roundLiters(lastMonthTotal * URINE_PER_CHECKIN_L),
+    urineComparePercent: checkinCompare.comparePercent,
+    urineTrend: checkinCompare.trend,
+    // 节水按 waterout 快照区间差值
+    todayWaterSavingLiters: roundLiters(todayWaterSaving),
+    yesterdayWaterSavingLiters: roundLiters(yesterdayWaterSaving),
+    lastMonthWaterSavingLiters: roundLiters(lastMonthWaterSaving),
+    waterSavingComparePercent: waterSavingCompare.comparePercent,
+    waterSavingTrend: waterSavingCompare.trend,
     deviceCount: deviceIds === null ? null : deviceIds.length,
   }
 }

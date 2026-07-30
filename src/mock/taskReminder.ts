@@ -1,4 +1,4 @@
-export type TaskStatus = 'pending' | 'notice' | 'done'
+export type TaskStatus = 'pending' | 'done'
 
 export interface TaskReminderItem {
   id: string
@@ -17,7 +17,6 @@ export const taskStatusMeta: Record<
   { label: string; color: string; background: string }
 > = {
   pending: { label: '待处理', color: '#FFB4AB', background: 'rgba(255, 180, 171, 0.18)' },
-  notice: { label: '最新通知', color: '#FFF99F', background: 'rgba(255, 249, 159, 0.18)' },
   done: { label: '已处理', color: '#DBFCFF', background: 'rgba(219, 252, 255, 0.18)' },
 }
 
@@ -32,7 +31,7 @@ export const taskReminderMock: TaskReminderData = {
     },
     {
       id: '2',
-      status: 'notice',
+      status: 'pending',
       deviceNo: 3,
       event: '滤芯即将到期需更换',
       datetime: '06/24 09:45',
@@ -53,7 +52,7 @@ export const taskReminderMock: TaskReminderData = {
     },
     {
       id: '5',
-      status: 'notice',
+      status: 'pending',
       deviceNo: 4,
       event: '粪便盒待清理',
       datetime: '06/24 13:18',
@@ -77,8 +76,7 @@ export const taskReminderMock: TaskReminderData = {
 
 const taskStatusOrder: Record<TaskStatus, number> = {
   pending: 0,
-  notice: 1,
-  done: 2,
+  done: 1,
 }
 
 export function parseTaskDatetime(datetime: string, year = 2026) {

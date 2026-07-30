@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { useCommunityMocks, useResolvedCommunityId } from '@/hooks/useActiveCommunity'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
-import {
-  applyDeviceOnlineStatus,
-  fetchDeviceStatuses,
-} from '@/services/deviceStatusApi'
+import { applyDeviceMetrics, fetchDeviceMetrics } from '@/services/deviceMetricsApi'
 
-const DEVICE_STATUS_REFRESH_MS = 60 * 1000
+const DEVICE_METRICS_REFRESH_MS = 60 * 1000
 
 export function useLiveCommunityMocks(): CommunityMockBundle | null {
+  const communityId = useResolvedCommunityId()
   const baseMocks = useCommunityMocks()
   const [liveMocks, setLiveMocks] = useState<CommunityMockBundle | null>(baseMocks)
 
@@ -17,32 +15,32 @@ export function useLiveCommunityMocks(): CommunityMockBundle | null {
   }, [baseMocks])
 
   useEffect(() => {
-    if (!baseMocks) return
+    if (!baseMocks || !communityId) return
 
     let cancelled = false
 
-    const loadDeviceStatuses = async () => {
+    const loadDeviceMetrics = async () => {
       try {
-        const statusData = await fetchDeviceStatuses()
+        const metrics = await fetchDeviceMetrics(communityId)
         if (!cancelled) {
-          setLiveMocks(applyDeviceOnlineStatus(baseMocks, statusData))
+          setLiveMocks(applyDeviceMetrics(baseMocks, metrics))
         }
       } catch (error) {
-        console.error('获取设备在线状态失败', error)
+        console.error('获取设备运行指标失败', error)
         if (!cancelled) {
           setLiveMocks(baseMocks)
         }
       }
     }
 
-    void loadDeviceStatuses()
-    const timer = window.setInterval(loadDeviceStatuses, DEVICE_STATUS_REFRESH_MS)
+    void loadDeviceMetrics()
+    const timer = window.setInterval(loadDeviceMetrics, DEVICE_METRICS_REFRESH_MS)
 
     return () => {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [baseMocks])
+  }, [baseMocks, communityId])
 
   return liveMocks
 }

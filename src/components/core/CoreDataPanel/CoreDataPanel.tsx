@@ -12,14 +12,36 @@ export function CoreDataPanel() {
     if (!mocks) return null
 
     return mocks.coreData.columns.map((column) => {
-      if (column.key !== 'checkin' || !stats) return column
+      if (!stats) return column
 
-      return {
-        ...column,
-        value: String(stats.todayTotal),
-        comparePercent: stats.comparePercent,
-        trend: stats.trend,
+      if (column.key === 'checkin') {
+        return {
+          ...column,
+          value: String(stats.todayTotal),
+          comparePercent: stats.comparePercent,
+          trend: stats.trend,
+        }
       }
+
+      if (column.key === 'urine') {
+        return {
+          ...column,
+          value: stats.todayUrineLiters.toFixed(2),
+          comparePercent: stats.urineComparePercent,
+          trend: stats.urineTrend,
+        }
+      }
+
+      if (column.key === 'water-saving') {
+        return {
+          ...column,
+          value: stats.todayWaterSavingLiters.toFixed(2),
+          comparePercent: stats.waterSavingComparePercent,
+          trend: stats.waterSavingTrend,
+        }
+      }
+
+      return column
     })
   }, [mocks, stats])
 

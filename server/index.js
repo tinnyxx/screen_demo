@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { getAllDeviceStatuses } from './onenet.js'
+import { getCommunityDeviceMetrics } from './deviceMetrics.js'
 import { sql } from './start.js'
 import {
   getCheckinDashboardStats,
@@ -107,6 +108,22 @@ app.get('/api/dashboard/checkin-stats', async (req, res) => {
   } catch (error) {
     console.error('Dashboard checkin-stats failed:', error)
     return res.status(500).json(dashboardErrorPayload('打卡统计查询失败', error))
+  }
+})
+
+/** 设备运行指标：PG 打卡数 + OneNET 属性（wet/distance/waterout） */
+app.get('/api/devices/metrics', async (req, res) => {
+  const parsed = parseCommunityId(req.query.communityId)
+  if (!parsed.ok) {
+    return res.status(400).json({ message: parsed.message })
+  }
+
+  try {
+    const data = await getCommunityDeviceMetrics(parsed.communityId)
+    return res.json(data)
+  } catch (error) {
+    console.error('Device metrics failed:', error)
+    return res.status(500).json(dashboardErrorPayload('设备运行指标查询失败', error))
   }
 })
 

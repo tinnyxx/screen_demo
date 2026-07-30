@@ -34,6 +34,42 @@ function buildAuthHeader(productId, productAccessKey) {
   return generateAuthorization('sha1', `products/${productId}`, productAccessKey)
 }
 
+function postJson(path, body, authorization) {
+  const payload = JSON.stringify(body)
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: API_HOST,
+        path,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload),
+          authorization,
+        },
+      },
+      (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data))
+          } catch {
+            reject(new Error(`OneNET 响应解析失败: ${data}`))
+          }
+        })
+      },
+    )
+
+    req.on('error', reject)
+    req.write(payload)
+    req.end()
+  })
+}
+
 function getJson(path, query, authorization) {
   const queryStr = Object.entries(query)
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
@@ -89,6 +125,87 @@ async function queryDeviceListPage({ productId, productAccessKey, offset = 0, li
   }
 
   return result.data
+}
+
+/** 兼容 data 为数组（[{identifier, value}]）或对象（identifier→value）两种返回 */
+function toPropertyMap(data) {
+  if (Array.isArray(data)) {
+    const map = {}
+    for (const item of data) {
+      if (item && item.identifier !== undefined) {
+        map[item.identifier] = item.value
+      }
+    }
+    return map
+  }
+  return data && typeof data === 'object' ? data : {}
+}
+
+/**
+ * 查询设备物模型属性（identifier → value）。
+ * 先批量查；平台批量校验失败（如某属性设备未实现）时降级为逐个查询。
+ */
+export async function queryDeviceProperties(deviceName, identifiers) {
+  const { productId, productAccessKey } = getConfig()
+  const authorization = buildAuthHeader(productId, productAccessKey)
+
+  const batchResult = await postJson(
+    '/thingmodel/query-device-property-detail',
+    { product_id: productId, device_name: deviceName, params: identifiers },
+    authorization,
+  )
+
+  if (batchResult.code === 0) {
+    return toPropertyMap(batchResult.data)
+  }
+
+  const parsed = {}
+  for (const identifier of identifiers) {
+    try {
+      const singleResult = await postJson(
+        '/thingmodel/query-device-property-detail',
+        { product_id: productId, device_name: deviceName, params: [identifier] },
+        authorization,
+      )
+      if (singleResult.code === 0) {
+        parsed[identifier] = toPropertyMap(singleResult.data)[identifier]
+      }
+    } catch (error) {
+      console.warn(`OneNET 属性 ${identifier} 查询失败 (${deviceName}):`, error.message)
+    }
+  }
+  return parsed
+}
+
+/**
+ * 查询设备事件记录。warn 事件由业务层持久化，避免 OneNET 查询窗口外丢失。
+ */
+export async function queryDeviceEventLogs(
+  deviceName,
+  { identifier = 'warn', startTime, endTime = Date.now(), offset = 0, limit = 100 } = {},
+) {
+  const { productId, productAccessKey } = getConfig()
+  const result = await getJson(
+    '/device/event-log',
+    {
+      product_id: productId,
+      device_name: deviceName,
+      start_time: startTime,
+      end_time: endTime,
+      identifier,
+      offset,
+      limit,
+    },
+    buildAuthHeader(productId, productAccessKey),
+  )
+
+  if (result.code !== 0) {
+    const error = new Error(result.msg || 'OneNET 设备事件查询失败')
+    error.code = result.code
+    throw error
+  }
+
+  return Array.isArray(result.data?.list) ? result.data.list : []
 }
 
 export async function getAllDeviceStatuses() {

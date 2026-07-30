@@ -1,7 +1,7 @@
 import bUseIcon from '@/assets/b-use-icon.png'
 import bPeeIcon from '@/assets/b-pee-icon.png'
 import bDealIcon from '@/assets/b-deal-icon.png'
-import { useCommunityMocks } from '@/hooks/useActiveCommunity'
+import { useLiveCommunityMocks } from '@/hooks/useLiveCommunityMocks'
 import styles from './BottomStats.module.scss'
 
 const iconMap = {
@@ -12,7 +12,7 @@ const iconMap = {
 } as const
 
 export function BottomStats() {
-  const mocks = useCommunityMocks()
+  const mocks = useLiveCommunityMocks()
   if (!mocks) return null
 
   return (

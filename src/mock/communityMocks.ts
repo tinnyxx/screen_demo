@@ -40,8 +40,8 @@ const lanwanMocks: CommunityMockBundle = {
   },
   mapDevices: {
     markers: [
-      { id: '1', label: '1号设备', left: 32, top: 38, offsetX: 413, offsetY: 270 },
-      { id: '2', label: '2号设备', left: 32, top: 38, offsetX: 183, offsetY: 270 },
+      { id: '1', label: '1号设备', left: 32, top: 38, offsetX: 183, offsetY: 270 },
+      { id: '2', label: '2号设备', left: 32, top: 38, offsetX: 413, offsetY: 270 },
     ],
   },
   monthlyReport: {
@@ -259,7 +259,7 @@ const lanwanMocks: CommunityMockBundle = {
       },
       {
         id: '2',
-        status: 'notice',
+        status: 'pending',
         deviceNo: 3,
         event: '滤芯即将到期需更换',
         datetime: '06/24 09:45',
@@ -280,7 +280,7 @@ const lanwanMocks: CommunityMockBundle = {
       },
       {
         id: '5',
-        status: 'notice',
+        status: 'pending',
         deviceNo: 4,
         event: '粪便盒待清理',
         datetime: '06/24 13:18',
@@ -334,8 +334,8 @@ const huarunMocks: CommunityMockBundle = {
   },
   mapDevices: {
     markers: [
-      { id: '1', label: '1号设备', left: 50, top: 48, offsetX: -80, offsetY: 40 },
-      { id: '2', label: '2号设备', left: 50, top: 48, offsetX: 120, offsetY: 90 },
+      { id: '1', label: '1号设备', left: 50, top: 48, offsetX: 120, offsetY: 90 },
+      { id: '2', label: '2号设备', left: 50, top: 48, offsetX: -80, offsetY: 40 },
       { id: '3', label: '3号设备', left: 50, top: 48, offsetX: 40, offsetY: -30 },
     ],
   },
@@ -536,7 +536,7 @@ const huarunMocks: CommunityMockBundle = {
       },
       {
         id: '2',
-        status: 'notice',
+        status: 'pending',
         deviceNo: 4,
         event: '滤芯即将到期需更换',
         datetime: '06/24 09:15',
@@ -557,7 +557,7 @@ const huarunMocks: CommunityMockBundle = {
       },
       {
         id: '5',
-        status: 'notice',
+        status: 'pending',
         deviceNo: 1,
         event: '水箱液位偏低',
         datetime: '06/24 14:20',

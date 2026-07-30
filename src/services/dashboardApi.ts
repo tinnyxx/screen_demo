@@ -19,6 +19,21 @@ export interface DashboardCheckinStats {
   trend: 'up' | 'down'
   lastMonth: string
   lastMonthTotal: number
+  /** 当前小区全部成功打卡次数（底部「累计使用次数」） */
+  totalCheckins: number
+  /** 尿液按打卡次数 × 0.08L 推算 */
+  todayUrineLiters: number
+  yesterdayUrineLiters: number
+  lastMonthUrineLiters: number
+  urineComparePercent: number
+  urineTrend: 'up' | 'down'
+  /** 节水按 waterout 累计值的区间差值 */
+  todayWaterSavingLiters: number
+  yesterdayWaterSavingLiters: number
+  lastMonthWaterSavingLiters: number
+  waterSavingComparePercent: number
+  waterSavingTrend: 'up' | 'down'
+  deviceCount?: number | null
 }
 
 export async function fetchDashboardCheckinStats(

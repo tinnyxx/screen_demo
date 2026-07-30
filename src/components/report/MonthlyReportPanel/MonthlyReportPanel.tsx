@@ -50,11 +50,16 @@ export function MonthlyReportPanel() {
         month,
       },
       items: base.items.map((item) => {
-        if (item.key !== 'checkin') return item
-        return {
-          ...item,
-          current: stats.lastMonthTotal,
+        if (item.key === 'checkin') {
+          return { ...item, current: stats.lastMonthTotal }
         }
+        if (item.key === 'urine') {
+          return { ...item, current: stats.lastMonthUrineLiters }
+        }
+        if (item.key === 'water-saving') {
+          return { ...item, current: stats.lastMonthWaterSavingLiters }
+        }
+        return item
       }),
     }
   }, [mocks, stats])

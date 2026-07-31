@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
 import type { DeviceOperationRow } from '@/mock/equipmentOperation'
+import { formatPileName } from '@/mock/equipmentOperation'
 
 const DEVICE_STATUS_API_URL = '/api/devices/status'
 
@@ -43,7 +44,7 @@ function buildOperationDevices(
 
     return {
       id: String(apiDevice.did ?? mockDevice?.id ?? index + 1),
-      name: mockDevice?.name ?? apiDevice.name,
+      name: formatPileName(index + 1),
       isOffline: apiDevice.status !== 1,
       todayUsage: mockDevice?.todayUsage ?? 0,
       waterLevel: mockDevice?.waterLevel ?? 0,

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
-import { resolveDeviceStatus } from '@/mock/equipmentOperation'
+import { resolveDeviceStatus, formatPileName } from '@/mock/equipmentOperation'
 import type { TaskReminderItem } from '@/mock/taskReminder'
 
 const DEVICE_METRICS_API_URL = '/api/devices/metrics'
@@ -77,7 +77,7 @@ export function applyDeviceMetrics(
 
     return {
       id: device.id,
-      name: mockRow?.name ?? device.name,
+      name: formatPileName(device.deviceNo),
       isOffline: !device.online,
       todayUsage: device.todayUsage,
       waterLevel: device.soilMoisture ?? mockRow?.waterLevel ?? 0,

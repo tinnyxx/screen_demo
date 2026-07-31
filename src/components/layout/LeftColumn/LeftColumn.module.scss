@@ -29,7 +29,9 @@
   top: calc(
     #{$equipment-status-top} - #{$header-height} + #{$equipment-status-height} + #{$card-gap}
   );
-  bottom: calc(#{$left-bottom-card-height} + #{$card-gap});
+  bottom: calc(
+    #{$left-bottom-card-height} + #{$card-gap} - #{$usage-status-height-increase}
+  );
   left: $page-margin-left;
   right: $column-padding;
   border-radius: $card-radius;
@@ -44,7 +46,7 @@
   bottom: 0;
   left: $page-margin-left;
   right: $column-padding;
-  height: $left-bottom-card-height;
+  height: calc(#{$left-bottom-card-height} - #{$usage-status-height-increase});
   border-radius: $card-radius;
   background-color: $color-card-bg;
   border: 1px solid $color-card-border;

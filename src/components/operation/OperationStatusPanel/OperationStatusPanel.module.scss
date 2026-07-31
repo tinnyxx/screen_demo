@@ -14,22 +14,7 @@
   left: 10px;
   right: 10px;
   bottom: 8px;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
-}
-
-.scrollBody {
-  flex: 1;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 .table {

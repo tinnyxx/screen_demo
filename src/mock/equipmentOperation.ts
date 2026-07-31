@@ -1,5 +1,9 @@
 export type DeviceRunStatus = 'normal' | 'offline' | 'fault'
 
+export function formatPileName(deviceNo: number): string {
+  return `${String(deviceNo).padStart(2, '0')}号桩`
+}
+
 export type MetricKey = 'waterLevel' | 'filterLife' | 'fecesBox'
 
 export interface DeviceOperationRow {
@@ -39,7 +43,7 @@ export const operationStatusMock: OperationStatusData = {
   devices: [
     {
       id: '1',
-      name: '1号桩',
+      name: '01号桩',
       isOffline: false,
       todayUsage: 12,
       waterLevel: 56,
@@ -48,48 +52,12 @@ export const operationStatusMock: OperationStatusData = {
     },
     {
       id: '2',
-      name: '2号桩',
+      name: '02号桩',
       isOffline: true,
       todayUsage: 0,
       waterLevel: 48,
       filterLife: 65,
       fecesBox: 20,
-    },
-    {
-      id: '3',
-      name: '3号桩',
-      isOffline: false,
-      todayUsage: 9,
-      waterLevel: 62,
-      filterLife: 58,
-      fecesBox: 83,
-    },
-    {
-      id: '4',
-      name: '4号桩',
-      isOffline: false,
-      todayUsage: 15,
-      waterLevel: 44,
-      filterLife: 18,
-      fecesBox: 42,
-    },
-    {
-      id: '5',
-      name: '5号桩',
-      isOffline: false,
-      todayUsage: 7,
-      waterLevel: 86,
-      filterLife: 61,
-      fecesBox: 51,
-    },
-    {
-      id: '6',
-      name: '6号桩',
-      isOffline: false,
-      todayUsage: 11,
-      waterLevel: 53,
-      filterLife: 76,
-      fecesBox: 28,
     },
   ],
 }

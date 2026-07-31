@@ -27,7 +27,7 @@
 .usageStatus {
   position: absolute;
   top: calc(
-    #{$equipment-status-top} - #{$header-height} + #{$equipment-status-height} + #{$card-gap}
+    #{$equipment-status-top} - #{$header-height} + #{$equipment-status-height} + #{$card-gap} + #{$usage-status-top-offset}
   );
   bottom: calc(#{$left-bottom-card-height} + #{$card-gap} - #{$usage-status-height-extra});
   left: $page-margin-left;

@@ -11,6 +11,7 @@ import { MetricProgress } from './MetricProgress'
 import styles from './OperationStatusPanel.module.scss'
 
 const metricKeys: MetricKey[] = ['waterLevel', 'filterLife', 'fecesBox']
+const OPERATION_DEVICE_NAMES = ['01号桩', '02号桩'] as const
 
 function DeviceRow({
   device,
@@ -62,12 +63,18 @@ function DeviceRow({
 
 export function OperationStatusPanel() {
   const mocks = useLiveCommunityMocks()
+
   const operationStatus = mocks?.operationStatus
   const columns = operationStatus?.columns ?? []
   const devices = operationStatus?.devices ?? []
   const metricColors = operationStatus?.metricColors
   const warningColor = operationStatus?.warningColor ?? ''
   const abnormalThreshold = operationStatus?.abnormalThreshold ?? 80
+
+  const displayDevices = devices.slice(0, OPERATION_DEVICE_NAMES.length).map((device, index) => ({
+    ...device,
+    name: OPERATION_DEVICE_NAMES[index],
+  }))
 
   if (!operationStatus || !metricColors) return null
 
@@ -85,7 +92,7 @@ export function OperationStatusPanel() {
             </tr>
           </thead>
           <tbody>
-            {devices.map((device) => (
+            {displayDevices.map((device) => (
               <DeviceRow
                 key={device.id}
                 device={device}

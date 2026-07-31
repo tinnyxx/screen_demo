@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
-import { resolveDeviceStatus, formatPileName } from '@/mock/equipmentOperation'
+import { resolveDeviceStatus } from '@/mock/equipmentOperation'
 import type { TaskReminderItem } from '@/mock/taskReminder'
 
 const DEVICE_METRICS_API_URL = '/api/devices/metrics'
@@ -65,6 +65,8 @@ function formatLiters(value: number): string {
   return value.toFixed(2)
 }
 
+const OPERATION_DEVICE_NAMES = ['01号桩', '02号桩'] as const
+
 /** 用真实设备指标覆盖 mock：设备状态环、运行状态表、滤芯报警、底部累计栏 */
 export function applyDeviceMetrics(
   bundle: CommunityMockBundle,
@@ -72,12 +74,12 @@ export function applyDeviceMetrics(
 ): CommunityMockBundle {
   const mockDevices = bundle.operationStatus.devices
 
-  const devices = metrics.devices.map((device, index) => {
+  const devices = metrics.devices.slice(0, OPERATION_DEVICE_NAMES.length).map((device, index) => {
     const mockRow = mockDevices[index]
 
     return {
       id: device.id,
-      name: formatPileName(device.deviceNo),
+      name: OPERATION_DEVICE_NAMES[index],
       isOffline: !device.online,
       todayUsage: device.todayUsage,
       waterLevel: device.soilMoisture ?? mockRow?.waterLevel ?? 0,

@@ -1,9 +1,5 @@
 export type DeviceRunStatus = 'normal' | 'offline' | 'fault'
 
-export function formatPileName(deviceNo: number): string {
-  return `${String(deviceNo).padStart(2, '0')}号桩`
-}
-
 export type MetricKey = 'waterLevel' | 'filterLife' | 'fecesBox'
 
 export interface DeviceOperationRow {

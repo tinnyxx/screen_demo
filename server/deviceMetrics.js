@@ -123,6 +123,23 @@ async function recordWateroutSnapshot(deviceId, waterout) {
   }
 }
 
+/** 每设备最近一条快照，设备离线读不到实时 waterout 时兜底 */
+async function getLatestWateroutByDevice(deviceIds) {
+  if (deviceIds.length === 0) return new Map()
+  try {
+    const rows = await sql`
+      SELECT DISTINCT ON (device_id) device_id, waterout
+      FROM device_waterout_readings
+      WHERE device_id IN ${sql(deviceIds)}
+      ORDER BY device_id, recorded_at DESC
+    `
+    return new Map(rows.map((row) => [String(row.device_id), Number(row.waterout) || 0]))
+  } catch (error) {
+    console.warn('waterout 最新快照查询失败:', error.message)
+    return new Map()
+  }
+}
+
 // ---------- 设备报警（device_alerts） ----------
 
 async function upsertDetectionAlert(deviceId, alertType, message) {
@@ -357,7 +374,13 @@ async function buildCommunityDeviceMetrics(communityId) {
   }
 
   const totalCheckins = devices.reduce((sum, device) => sum + device.totalCheckins, 0)
-  const waterSaving = devices.reduce((sum, device) => sum + (device.waterout ?? 0), 0)
+
+  // 累计节水：实时值读不到（离线）时用最近一条快照，避免离线导致累计数掉零
+  const latestWaterout = await getLatestWateroutByDevice(deviceIds)
+  const waterSaving = devices.reduce(
+    (sum, device) => sum + (device.waterout ?? latestWaterout.get(device.id) ?? 0),
+    0,
+  )
 
   return {
     communityId,

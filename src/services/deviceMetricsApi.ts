@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
+import { resolveDeviceStatus } from '@/mock/equipmentOperation'
 import type { TaskReminderItem } from '@/mock/taskReminder'
 
 const DEVICE_METRICS_API_URL = '/api/devices/metrics'
@@ -93,6 +94,15 @@ export function applyDeviceMetrics(
     datetime: alarm.datetime,
   }))
 
+  const pendingCount = metrics.alarms.filter(
+    (alarm) => alarm.status === 'pending',
+  ).length
+
+  const faultCount = devices.filter(
+    (device) =>
+      resolveDeviceStatus(device, bundle.operationStatus.abnormalThreshold) === 'fault',
+  ).length
+
   return {
     ...bundle,
     equipmentStatus: {
@@ -101,6 +111,7 @@ export function applyDeviceMetrics(
       legend: bundle.equipmentStatus.legend.map((item) => {
         if (item.key === 'online') return { ...item, count: metrics.summary.online }
         if (item.key === 'offline') return { ...item, count: metrics.summary.offline }
+        if (item.key === 'fault') return { ...item, count: faultCount }
         return item
       }),
     },
@@ -121,6 +132,9 @@ export function applyDeviceMetrics(
       }
       if (item.key === 'water-saving') {
         return { ...item, value: formatLiters(metrics.totals.waterSavingLiters) }
+      }
+      if (item.key === 'pending-events') {
+        return { ...item, value: String(pendingCount) }
       }
       return item
     }),

@@ -79,7 +79,7 @@ const taskStatusOrder: Record<TaskStatus, number> = {
   done: 1,
 }
 
-export function parseTaskDatetime(datetime: string, year = 2026) {
+export function parseTaskDatetime(datetime: string, year = new Date().getFullYear()) {
   const [datePart, timePart] = datetime.split(' ')
   const [month, day] = datePart.split('/').map(Number)
   const [hour, minute] = timePart.split(':').map(Number)

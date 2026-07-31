@@ -29,7 +29,7 @@
   top: calc(
     #{$equipment-status-top} - #{$header-height} + #{$equipment-status-height} + #{$card-gap} + #{$usage-status-top-offset}
   );
-  bottom: calc(#{$left-bottom-card-height} + #{$card-gap} - #{$usage-status-height-extra});
+  bottom: calc(#{$left-bottom-card-height} + #{$card-gap} - #{$usage-status-height-extra} + #{$usage-status-bottom-inset});
   left: $page-margin-left;
   right: $column-padding;
   border-radius: $card-radius;

@@ -50,7 +50,8 @@ $card-icon-bottom: calc(0.56vh - #{$icon-offset-y});
 $stat-title-bottom: calc(0.56vh - #{$title-offset-y} + 25px);
 $stat-icon-bottom: calc(0.56vh - #{$icon-offset-y} + 20px);
 
-$left-bottom-card-height: calc((100% - #{$column-padding * 3}) * 0.36 + #{$operation-status-extra-height} - #{$left-column-layout-offset});
+$operation-status-height-reduction: 75px;
+$left-bottom-card-height: calc((100% - #{$column-padding * 3}) * 0.36 + #{$operation-status-extra-height} - #{$left-column-layout-offset} - #{$operation-status-height-reduction});
 $right-top-card-height: calc((100% - #{$column-padding * 3}) * 0.28 - 40px);
 $right-middle-card-height: calc((100% - #{$column-padding * 3}) * 0.28 * 1.4 + #{$task-reminder-extra-height});
 $right-bottom-card-height: calc((100% - #{$column-padding * 3}) * 0.36 + #{$monthly-report-extra-height});

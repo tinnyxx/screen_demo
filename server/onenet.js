@@ -11,10 +11,10 @@ const DEVICE_STATUS_MAP = {
 
 function getConfig() {
   return {
-    productId: process.env.ONENET_PRODUCT_ID || '8Y7naQMul0',
+    productId: process.env.ONENET_PRODUCT_ID || 'gnBasS21dz',
     productAccessKey:
       process.env.ONENET_PRODUCT_ACCESS_KEY ||
-      'IV3f3/mfkf39a1+dVVFpH9mHpTVfnZnxSa23I1fXeTs=',
+      'QZVR9bdrl2HP2anzK8W/7zWbH13D84uF14ndo/eLsdM=',
   }
 }
 
@@ -206,6 +206,33 @@ export async function queryDeviceEventLogs(
   }
 
   return Array.isArray(result.data?.list) ? result.data.list : []
+}
+
+/** 平台要求 start_time/end_time；从最早可查时间分页拉取全部 warn 事件 */
+export async function queryAllDeviceEventLogs(
+  deviceName,
+  { identifier = 'warn', pageSize = 100, startTime = 0, endTime = Date.now() } = {},
+) {
+  const allEvents = []
+  let offset = 0
+
+  while (true) {
+    const page = await queryDeviceEventLogs(deviceName, {
+      identifier,
+      startTime,
+      endTime,
+      offset,
+      limit: pageSize,
+    })
+
+    if (page.length === 0) break
+
+    allEvents.push(...page)
+    if (page.length < pageSize) break
+    offset += pageSize
+  }
+
+  return allEvents
 }
 
 export async function getAllDeviceStatuses() {

@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import { sql } from './start.js'
 import {
   getAllDeviceStatuses,
-  queryDeviceEventLogs,
+  queryAllDeviceEventLogs,
   queryDeviceProperties,
 } from './onenet.js'
 import { getShanghaiDates } from './dashboard.js'
@@ -11,19 +11,28 @@ import { getShanghaiDates } from './dashboard.js'
 const FILTER_LIFE_MAX_CHECKINS = 1500
 /** 每次打卡处理尿液 0.08L */
 const URINE_PER_CHECKIN_L = 0.08
-/** 粪便盒超声距离：空 46cm，满 27cm */
-const FECES_EMPTY_CM = 46
-const FECES_FULL_CM = 27
+/** 粪便盒超声距离（mm）：空 ≥360，满 ≤250 */
+const FECES_EMPTY_MM = 360
+const FECES_FULL_MM = 250
 /** 滤芯寿命低于该百分比时产生运维报警 */
 const FILTER_ALARM_PERCENT = 20
 const FECES_ALARM_PERCENT = 80
 
-const PROPERTY_IDENTIFIERS = ['wet', 'distance', 'waterout']
+/**
+ * OneNET 双板映射：top 板读 distance/temp，esp 板读 waterout。
+ * 同一逻辑设备任一块离线则整体离线；事件从所有关联板名合并拉取。
+ */
+const ONENET_BOARD_MAP = {
+  STATION_001: { top: 'SZGXY101', esp: 'SZGXY101ESP' },
+  STATION_002: { top: 'ESP32C3A1', esp: null },
+}
+
+const TOP_PROPERTY_IDENTIFIERS = ['distance', 'temp']
+const ESP_PROPERTY_IDENTIFIERS = ['waterout', 'waterin']
+
 const CACHE_TTL_MS = 30 * 1000
 /** waterout 快照写入节流：每设备至少间隔 10 分钟 */
 const SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000
-/** 每轮拉取近 7 天 warn；入库后永久保留待处理，source_event_key 防重复 */
-const WARN_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000
 
 async function getCommunityDevices(communityId) {
   return communityId
@@ -85,9 +94,9 @@ function computeFilterLife(totalCheckins) {
   return Math.max(0, Math.round(remaining * 100))
 }
 
-function computeFecesBoxPercent(distanceCm) {
-  if (distanceCm === null) return null
-  const ratio = (FECES_EMPTY_CM - distanceCm) / (FECES_EMPTY_CM - FECES_FULL_CM)
+function computeFecesBoxPercent(distanceMm) {
+  if (distanceMm === null) return null
+  const ratio = (FECES_EMPTY_MM - distanceMm) / (FECES_EMPTY_MM - FECES_FULL_MM)
   return Math.max(0, Math.min(100, Math.round(ratio * 100)))
 }
 
@@ -102,6 +111,69 @@ function shanghaiNowLabel() {
   }).formatToParts(new Date())
   const get = (type) => parts.find((part) => part.type === type)?.value ?? '00'
   return `${get('month')}/${get('day')} ${get('hour')}:${get('minute')}`
+}
+
+function resolveBoardConfig(deviceId, onenetDeviceName) {
+  const mapped = ONENET_BOARD_MAP[deviceId]
+  if (mapped) {
+    const eventSources = [mapped.top, mapped.esp].filter(Boolean)
+    return { top: mapped.top, esp: mapped.esp, eventSources }
+  }
+
+  const fallback = String(onenetDeviceName ?? '').trim()
+  return {
+    top: fallback || null,
+    esp: null,
+    eventSources: fallback ? [fallback] : [],
+  }
+}
+
+function isLogicalDeviceOnline(boards, onenetByName) {
+  const names = [boards.top, boards.esp].filter(Boolean)
+  if (names.length === 0) return false
+  return names.every((name) => onenetByName.get(name)?.status === 1)
+}
+
+async function fetchBoardProperties(boards, onenetByName) {
+  const result = {}
+
+  const topName = boards.top
+  const topOnline = topName && onenetByName.get(topName)?.status === 1
+  if (topOnline) {
+    try {
+      Object.assign(result, await queryDeviceProperties(topName, TOP_PROPERTY_IDENTIFIERS))
+    } catch (error) {
+      console.warn(`OneNET 属性查询失败 (${topName}):`, error.message)
+    }
+  }
+
+  const espName = boards.esp
+  const espOnline = espName && onenetByName.get(espName)?.status === 1
+  if (espOnline) {
+    try {
+      Object.assign(result, await queryDeviceProperties(espName, ESP_PROPERTY_IDENTIFIERS))
+    } catch (error) {
+      console.warn(`OneNET 属性查询失败 (${espName}):`, error.message)
+    }
+  }
+
+  return result
+}
+
+async function fetchAllWarnEvents(eventSources) {
+  const allEvents = []
+
+  for (const deviceName of eventSources) {
+    try {
+      const events = await queryAllDeviceEventLogs(deviceName, { identifier: 'warn' })
+      allEvents.push(...events)
+    } catch (error) {
+      console.warn(`OneNET warn 查询失败 (${deviceName}):`, error.message)
+    }
+  }
+
+  allEvents.sort((a, b) => Number(b.time ?? 0) - Number(a.time ?? 0))
+  return allEvents
 }
 
 // ---------- waterout 快照 ----------
@@ -176,10 +248,28 @@ function warnEventKey(deviceId, event) {
   return crypto.createHash('sha256').update(payload).digest('hex')
 }
 
+function parseWarnValue(raw) {
+  if (raw === null || raw === undefined) return null
+  if (typeof raw === 'object') return raw
+  if (typeof raw !== 'string') return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+/** 仅取 value.warn，忽略 info 字段 */
 function warnMessage(event) {
-  const value = event.value
-  if (typeof value === 'string' && value.trim()) return value.trim()
-  if (value !== null && value !== undefined) return `OneNET告警：${JSON.stringify(value)}`
+  const parsed = parseWarnValue(event.value)
+  if (parsed?.warn && String(parsed.warn).trim()) {
+    return String(parsed.warn).trim()
+  }
+
+  if (typeof event.value === 'string' && event.value.trim()) {
+    return event.value.trim()
+  }
+
   return event.name ? `OneNET告警：${event.name}` : 'OneNET设备告警'
 }
 
@@ -259,37 +349,16 @@ async function buildCommunityDeviceMetrics(communityId) {
     (onenetStatus?.devices ?? []).map((device) => [device.name, device]),
   )
 
-  // 仅对在线且绑定了 OneNET 名的桩下发属性查询
+  const boardConfigs = deviceRows.map((row) =>
+    resolveBoardConfig(String(row.id), row.onenet_device_name),
+  )
+
   const propertyResults = await Promise.all(
-    deviceRows.map(async (row) => {
-      const onenetName = String(row.onenet_device_name ?? '').trim()
-      const onenetDevice = onenetName ? onenetByName.get(onenetName) : null
-      if (!onenetDevice || onenetDevice.status !== 1) return null
-      try {
-        return await queryDeviceProperties(onenetName, PROPERTY_IDENTIFIERS)
-      } catch (error) {
-        console.warn(`OneNET 属性查询失败 (${onenetName}):`, error.message)
-        return null
-      }
-    }),
+    boardConfigs.map((boards) => fetchBoardProperties(boards, onenetByName)),
   )
 
   const warnResults = await Promise.all(
-    deviceRows.map(async (row) => {
-      const onenetName = String(row.onenet_device_name ?? '').trim()
-      if (!onenetName) return []
-      try {
-        return await queryDeviceEventLogs(onenetName, {
-          identifier: 'warn',
-          startTime: Date.now() - WARN_LOOKBACK_MS,
-          endTime: Date.now(),
-          limit: 100,
-        })
-      } catch (error) {
-        console.warn(`OneNET warn 查询失败 (${onenetName}):`, error.message)
-        return []
-      }
-    }),
+    boardConfigs.map((boards) => fetchAllWarnEvents(boards.eventSources)),
   )
 
   const maintenanceTasks = []
@@ -297,9 +366,9 @@ async function buildCommunityDeviceMetrics(communityId) {
   const devices = await Promise.all(
     deviceRows.map(async (row, index) => {
       const id = String(row.id)
-      const onenetName = String(row.onenet_device_name ?? '').trim() || null
-      const onenetDevice = onenetName ? onenetByName.get(onenetName) : null
-      const online = onenetDevice ? onenetDevice.status === 1 : false
+      const boards = boardConfigs[index]
+      const primaryOnenetName = boards.top || boards.esp || null
+      const online = isLogicalDeviceOnline(boards, onenetByName)
       const counts = checkinCounts.get(id) ?? {
         total: 0,
         today: 0,
@@ -307,11 +376,10 @@ async function buildCommunityDeviceMetrics(communityId) {
       }
       const props = propertyResults[index]
 
-      const soilMoisture = toFiniteNumber(props?.wet)
-      const distanceCm = toFiniteNumber(props?.distance)
+      const distanceMm = toFiniteNumber(props?.distance)
       const waterout = toFiniteNumber(props?.waterout)
       const filterLife = computeFilterLife(counts.filterCheckins)
-      const fecesBoxPercent = computeFecesBoxPercent(distanceCm)
+      const fecesBoxPercent = computeFecesBoxPercent(distanceMm)
 
       if (waterout !== null) {
         await recordWateroutSnapshot(id, waterout)
@@ -343,13 +411,13 @@ async function buildCommunityDeviceMetrics(communityId) {
         id,
         deviceNo: index + 1,
         name: row.name || id,
-        onenetName,
+        onenetName: primaryOnenetName,
         online,
         todayUsage: counts.today,
         totalCheckins: counts.total,
-        soilMoisture: soilMoisture === null ? null : Math.round(soilMoisture * 10) / 10,
+        soilMoisture: null,
         filterLife,
-        distanceCm,
+        distanceMm,
         fecesBoxPercent,
         waterout,
       }

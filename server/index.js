@@ -111,7 +111,7 @@ app.get('/api/dashboard/checkin-stats', async (req, res) => {
   }
 })
 
-/** 设备运行指标：PG 打卡数 + OneNET 属性（wet/distance/waterout） */
+/** 设备运行指标：PG 打卡数 + OneNET 双板属性（101→distance，ESP→waterout）+ 全量 warn 事件 */
 app.get('/api/devices/metrics', async (req, res) => {
   const parsed = parseCommunityId(req.query.communityId)
   if (!parsed.ok) {

@@ -13,13 +13,13 @@ export interface DeviceMetricItem {
   online: boolean
   todayUsage: number
   totalCheckins: number
-  /** 土壤湿度 wet，0-100，离线或未上报为 null */
+  /** 土壤湿度，当前物模型未上报时为 null */
   soilMoisture: number | null
   /** 由打卡次数推算，1500 次后为 0 */
   filterLife: number
-  /** 粪便盒超声距离 cm */
-  distanceCm: number | null
-  /** 距离换算的装满百分比，46cm=0%，27cm=100% */
+  /** 粪便盒超声距离 mm（SZGXY101 板），空 ≥360，满 ≤250 */
+  distanceMm: number | null
+  /** 距离换算的装满百分比，360mm=0%，250mm=100% */
   fecesBoxPercent: number | null
   waterout: number | null
 }

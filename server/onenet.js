@@ -208,30 +208,48 @@ export async function queryDeviceEventLogs(
   return Array.isArray(result.data?.list) ? result.data.list : []
 }
 
-/** 平台要求 start_time/end_time；从最早可查时间分页拉取全部 warn 事件 */
+/** OneNET 事件：总范围 ≤30 天，单次窗口 ≤7 天；分段 + 翻页拉取全部 warn */
+const EVENT_MAX_LOOKBACK_MS = 30 * 24 * 60 * 60 * 1000
+const EVENT_MAX_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+const EVENT_TIME_SAFETY_MS = 60 * 1000
+
+function getEventQueryStartTime(endTime = Date.now()) {
+  return endTime - EVENT_MAX_LOOKBACK_MS + EVENT_TIME_SAFETY_MS
+}
+
 export async function queryAllDeviceEventLogs(
   deviceName,
-  { identifier = 'warn', pageSize = 100, startTime = 0, endTime = Date.now() } = {},
+  { identifier = 'warn', pageSize = 100, endTime = Date.now() } = {},
 ) {
+  const earliestTime = getEventQueryStartTime(endTime)
+  const windowMs = EVENT_MAX_WINDOW_MS - EVENT_TIME_SAFETY_MS
   const allEvents = []
-  let offset = 0
+  let windowStart = earliestTime
 
-  while (true) {
-    const page = await queryDeviceEventLogs(deviceName, {
-      identifier,
-      startTime,
-      endTime,
-      offset,
-      limit: pageSize,
-    })
+  while (windowStart < endTime) {
+    const windowEnd = Math.min(windowStart + windowMs, endTime)
+    let offset = 0
 
-    if (page.length === 0) break
+    while (true) {
+      const page = await queryDeviceEventLogs(deviceName, {
+        identifier,
+        startTime: windowStart,
+        endTime: windowEnd,
+        offset,
+        limit: pageSize,
+      })
 
-    allEvents.push(...page)
-    if (page.length < pageSize) break
-    offset += pageSize
+      if (page.length === 0) break
+
+      allEvents.push(...page)
+      if (page.length < pageSize) break
+      offset += pageSize
+    }
+
+    windowStart = windowEnd + 1
   }
 
+  allEvents.sort((a, b) => Number(b.time ?? 0) - Number(a.time ?? 0))
   return allEvents
 }
 

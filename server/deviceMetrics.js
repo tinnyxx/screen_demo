@@ -30,9 +30,10 @@ const ONENET_BOARD_MAP = {
 /** 大屏展示顺序：01号=STATION_001，02号=STATION_002 */
 const DEVICE_SLOT_ORDER = ['STATION_001', 'STATION_002']
 
-/** 大屏槽位 → 打卡统计来源（pet_devices.id），未配置则用自身 id */
+/** 大屏槽位 → 打卡统计来源（pet_devices.id） */
 const CHECKIN_SOURCE_BY_SLOT = {
   STATION_001: 'STATION_002',
+  STATION_002: 'STATION_001',
 }
 
 function resolveCheckinSourceId(displayDeviceId) {

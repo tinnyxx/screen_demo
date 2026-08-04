@@ -30,6 +30,15 @@ const ONENET_BOARD_MAP = {
 /** 大屏展示顺序：01号=STATION_001，02号=STATION_002 */
 const DEVICE_SLOT_ORDER = ['STATION_001', 'STATION_002']
 
+/** 大屏槽位 → 打卡统计来源（pet_devices.id），未配置则用自身 id */
+const CHECKIN_SOURCE_BY_SLOT = {
+  STATION_001: 'STATION_002',
+}
+
+function resolveCheckinSourceId(displayDeviceId) {
+  return CHECKIN_SOURCE_BY_SLOT[displayDeviceId] ?? displayDeviceId
+}
+
 function resolveDeviceNo(deviceId, fallbackIndex) {
   const slotIndex = DEVICE_SLOT_ORDER.indexOf(deviceId)
   return slotIndex >= 0 ? slotIndex + 1 : fallbackIndex + 1
@@ -394,7 +403,8 @@ async function buildCommunityDeviceMetrics(communityId) {
       const boards = boardConfigs[index]
       const primaryOnenetName = boards.top || boards.esp || null
       const online = isLogicalDeviceOnline(boards, onenetByName)
-      const counts = checkinCounts.get(id) ?? {
+      const checkinSourceId = resolveCheckinSourceId(id)
+      const counts = checkinCounts.get(checkinSourceId) ?? {
         total: 0,
         today: 0,
         filterCheckins: 0,
@@ -467,7 +477,10 @@ async function buildCommunityDeviceMetrics(communityId) {
     })
   }
 
-  const totalCheckins = devices.reduce((sum, device) => sum + device.totalCheckins, 0)
+  const totalCheckins = deviceIds.reduce(
+    (sum, deviceId) => sum + (checkinCounts.get(deviceId)?.total ?? 0),
+    0,
+  )
 
   // 累计节水：实时值读不到（离线）时用最近一条快照，避免离线导致累计数掉零
   const latestWaterout = await getLatestWateroutByDevice(deviceIds)

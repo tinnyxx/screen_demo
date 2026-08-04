@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { DEVICE_SLOTS } from '@/config/deviceSlots'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
 import type { DeviceOperationRow } from '@/mock/equipmentOperation'
 
@@ -34,19 +35,18 @@ export async function fetchDeviceStatuses(): Promise<DeviceStatusResponse> {
   return data
 }
 
-const OPERATION_DEVICE_NAMES = ['01号桩', '02号桩'] as const
-
 function buildOperationDevices(
   apiDevices: DeviceStatusItem[],
   mockDevices: DeviceOperationRow[],
 ): DeviceOperationRow[] {
-  return apiDevices.slice(0, OPERATION_DEVICE_NAMES.length).map((apiDevice, index) => {
+  return DEVICE_SLOTS.map((slot, index) => {
+    const apiDevice = apiDevices[index]
     const mockDevice = mockDevices[index]
 
     return {
-      id: String(apiDevice.did ?? mockDevice?.id ?? index + 1),
-      name: OPERATION_DEVICE_NAMES[index],
-      isOffline: apiDevice.status !== 1,
+      id: String(apiDevice?.did ?? mockDevice?.id ?? slot.id),
+      name: slot.label,
+      isOffline: apiDevice ? apiDevice.status !== 1 : (mockDevice?.isOffline ?? true),
       todayUsage: mockDevice?.todayUsage ?? 0,
       waterLevel: mockDevice?.waterLevel ?? 0,
       filterLife: mockDevice?.filterLife ?? 0,

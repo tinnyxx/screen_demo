@@ -1,4 +1,5 @@
 import { useLiveCommunityMocks } from '@/hooks/useLiveCommunityMocks'
+import { DEVICE_SLOTS } from '@/config/deviceSlots'
 import {
   getMetricColor,
   resolveDeviceStatus,
@@ -11,7 +12,6 @@ import { MetricProgress } from './MetricProgress'
 import styles from './OperationStatusPanel.module.scss'
 
 const metricKeys: MetricKey[] = ['waterLevel', 'filterLife', 'fecesBox']
-const OPERATION_DEVICE_NAMES = ['01号桩', '02号桩'] as const
 
 function DeviceRow({
   device,
@@ -71,10 +71,7 @@ export function OperationStatusPanel() {
   const warningColor = operationStatus?.warningColor ?? ''
   const abnormalThreshold = operationStatus?.abnormalThreshold ?? 80
 
-  const displayDevices = devices.slice(0, OPERATION_DEVICE_NAMES.length).map((device, index) => ({
-    ...device,
-    name: OPERATION_DEVICE_NAMES[index],
-  }))
+  const displayDevices = devices.slice(0, DEVICE_SLOTS.length)
 
   if (!operationStatus || !metricColors) return null
 

@@ -11,9 +11,9 @@ import { getShanghaiDates } from './dashboard.js'
 const FILTER_LIFE_MAX_CHECKINS = 1500
 /** 每次打卡处理尿液 0.08L */
 const URINE_PER_CHECKIN_L = 0.08
-/** 粪便盒超声距离（mm）：空 ≥360，满 ≤250 */
+/** 粪便盒超声距离（mm）：空 ≥360，满 ≤275 */
 const FECES_EMPTY_MM = 360
-const FECES_FULL_MM = 250
+const FECES_FULL_MM = 275
 /** 滤芯寿命低于该百分比时产生运维报警 */
 const FILTER_ALARM_PERCENT = 20
 const FECES_ALARM_PERCENT = 80
@@ -25,6 +25,30 @@ const FECES_ALARM_PERCENT = 80
 const ONENET_BOARD_MAP = {
   STATION_001: { top: 'SZGXY101', esp: 'SZGXY101ESP' },
   STATION_002: { top: 'ESP32C3A1', esp: null },
+}
+
+/** 大屏展示顺序：01号=STATION_001，02号=STATION_002 */
+const DEVICE_SLOT_ORDER = ['STATION_001', 'STATION_002']
+
+function resolveDeviceNo(deviceId, fallbackIndex) {
+  const slotIndex = DEVICE_SLOT_ORDER.indexOf(deviceId)
+  return slotIndex >= 0 ? slotIndex + 1 : fallbackIndex + 1
+}
+
+function resolveDeviceLabel(deviceId, fallbackName) {
+  const deviceNo = resolveDeviceNo(deviceId, -1)
+  return deviceNo > 0 ? `${String(deviceNo).padStart(2, '0')}号` : fallbackName
+}
+
+function sortDevicesBySlot(devices) {
+  return [...devices].sort((a, b) => {
+    const ai = DEVICE_SLOT_ORDER.indexOf(a.id)
+    const bi = DEVICE_SLOT_ORDER.indexOf(b.id)
+    if (ai === -1 && bi === -1) return 0
+    if (ai === -1) return 1
+    if (bi === -1) return -1
+    return ai - bi
+  })
 }
 
 const TOP_PROPERTY_IDENTIFIERS = ['distance', 'temp']
@@ -363,7 +387,8 @@ async function buildCommunityDeviceMetrics(communityId) {
 
   const maintenanceTasks = []
 
-  const devices = await Promise.all(
+  const devices = sortDevicesBySlot(
+    await Promise.all(
     deviceRows.map(async (row, index) => {
       const id = String(row.id)
       const boards = boardConfigs[index]
@@ -409,8 +434,8 @@ async function buildCommunityDeviceMetrics(communityId) {
 
       return {
         id,
-        deviceNo: index + 1,
-        name: row.name || id,
+        deviceNo: resolveDeviceNo(id, index),
+        name: resolveDeviceLabel(id, row.name || id),
         onenetName: primaryOnenetName,
         online,
         todayUsage: counts.today,
@@ -422,6 +447,7 @@ async function buildCommunityDeviceMetrics(communityId) {
         waterout,
       }
     }),
+    ),
   )
 
   const deviceNoById = new Map(devices.map((device) => [device.id, device.deviceNo]))

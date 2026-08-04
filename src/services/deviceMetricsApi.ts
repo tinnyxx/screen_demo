@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { DEVICE_SLOTS } from '@/config/deviceSlots'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
 import { resolveDeviceStatus } from '@/mock/equipmentOperation'
 import type { TaskReminderItem } from '@/mock/taskReminder'
@@ -17,9 +18,9 @@ export interface DeviceMetricItem {
   soilMoisture: number | null
   /** 由打卡次数推算，1500 次后为 0 */
   filterLife: number
-  /** 粪便盒超声距离 mm（SZGXY101 板），空 ≥360，满 ≤250 */
+  /** 粪便盒超声距离 mm（SZGXY101 板），空 ≥360，满 ≤275 */
   distanceMm: number | null
-  /** 距离换算的装满百分比，360mm=0%，250mm=100% */
+  /** 距离换算的装满百分比，360mm=0%，275mm=100% */
   fecesBoxPercent: number | null
   waterout: number | null
 }
@@ -65,7 +66,6 @@ function formatLiters(value: number): string {
   return value.toFixed(2)
 }
 
-const OPERATION_DEVICE_NAMES = ['01号桩', '02号桩'] as const
 
 /** 用真实设备指标覆盖 mock：设备状态环、运行状态表、滤芯报警、底部累计栏 */
 export function applyDeviceMetrics(
@@ -74,12 +74,27 @@ export function applyDeviceMetrics(
 ): CommunityMockBundle {
   const mockDevices = bundle.operationStatus.devices
 
-  const devices = metrics.devices.slice(0, OPERATION_DEVICE_NAMES.length).map((device, index) => {
+  const devices = DEVICE_SLOTS.map((slot, index) => {
+    const device = metrics.devices.find((item) => item.id === slot.id)
     const mockRow = mockDevices[index]
+
+    if (!device) {
+      return mockRow
+        ? { ...mockRow, name: slot.label }
+        : {
+            id: slot.id,
+            name: slot.label,
+            isOffline: true,
+            todayUsage: 0,
+            waterLevel: 0,
+            filterLife: 0,
+            fecesBox: 0,
+          }
+    }
 
     return {
       id: device.id,
-      name: OPERATION_DEVICE_NAMES[index],
+      name: slot.label,
       isOffline: !device.online,
       todayUsage: device.todayUsage,
       waterLevel: device.soilMoisture ?? mockRow?.waterLevel ?? 0,

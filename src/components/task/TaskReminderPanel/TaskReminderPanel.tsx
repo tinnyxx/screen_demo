@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { formatDeviceNoLabel } from '@/config/deviceSlots'
 import { useLiveCommunityMocks } from '@/hooks/useLiveCommunityMocks'
 import { sortTaskReminderItems, taskStatusMeta } from '@/mock/taskReminder'
 import styles from './TaskReminderPanel.module.scss'
@@ -78,7 +79,7 @@ export function TaskReminderPanel() {
                     {statusMeta.label}
                   </span>
                   <span className={styles.eventText}>
-                    {item.deviceNo}号设备·{item.event}
+                    {formatDeviceNoLabel(item.deviceNo)}·{item.event}
                   </span>
                   <time className={styles.time} dateTime={item.datetime}>
                     {item.datetime}

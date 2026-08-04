@@ -39,7 +39,7 @@ export const operationStatusMock: OperationStatusData = {
   devices: [
     {
       id: '1',
-      name: '01号桩',
+      name: '01号',
       isOffline: false,
       todayUsage: 12,
       waterLevel: 56,
@@ -48,7 +48,7 @@ export const operationStatusMock: OperationStatusData = {
     },
     {
       id: '2',
-      name: '02号桩',
+      name: '02号',
       isOffline: true,
       todayUsage: 0,
       waterLevel: 48,
@@ -90,6 +90,10 @@ export function getMetricColor(
 
   if (key === 'filterLife') {
     return value < 20 ? '#CF6143' : defaultColor
+  }
+
+  if (key === 'fecesBox') {
+    return value >= threshold ? '#CF6143' : defaultColor
   }
 
   return isMetricAbnormal(key, value, threshold) ? warningColor : defaultColor

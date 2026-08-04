@@ -40,8 +40,8 @@ const lanwanMocks: CommunityMockBundle = {
   },
   mapDevices: {
     markers: [
-      { id: '1', label: '1号设备', left: 32, top: 38, offsetX: 183, offsetY: 270 },
-      { id: '2', label: '2号设备', left: 32, top: 38, offsetX: 413, offsetY: 270 },
+      { id: '1', label: '01号', left: 32, top: 38, offsetX: 183, offsetY: 270 },
+      { id: '2', label: '02号', left: 32, top: 38, offsetX: 413, offsetY: 270 },
     ],
   },
   monthlyReport: {
@@ -194,7 +194,7 @@ const lanwanMocks: CommunityMockBundle = {
     devices: [
       {
         id: '1',
-        name: '01号桩',
+        name: '01号',
         isOffline: false,
         todayUsage: 12,
         waterLevel: 56,
@@ -203,7 +203,7 @@ const lanwanMocks: CommunityMockBundle = {
       },
       {
         id: '2',
-        name: '02号桩',
+        name: '02号',
         isOffline: true,
         todayUsage: 0,
         waterLevel: 48,
@@ -298,9 +298,9 @@ const huarunMocks: CommunityMockBundle = {
   },
   mapDevices: {
     markers: [
-      { id: '1', label: '1号设备', left: 50, top: 48, offsetX: 120, offsetY: 90 },
-      { id: '2', label: '2号设备', left: 50, top: 48, offsetX: -80, offsetY: 40 },
-      { id: '3', label: '3号设备', left: 50, top: 48, offsetX: 40, offsetY: -30 },
+      { id: '1', label: '01号', left: 50, top: 48, offsetX: 120, offsetY: 90 },
+      { id: '2', label: '02号', left: 50, top: 48, offsetX: -80, offsetY: 40 },
+      { id: '3', label: '03号', left: 50, top: 48, offsetX: 40, offsetY: -30 },
     ],
   },
   monthlyReport: {
@@ -453,7 +453,7 @@ const huarunMocks: CommunityMockBundle = {
     devices: [
       {
         id: '1',
-        name: '01号桩',
+        name: '01号',
         isOffline: false,
         todayUsage: 10,
         waterLevel: 61,
@@ -462,7 +462,7 @@ const huarunMocks: CommunityMockBundle = {
       },
       {
         id: '2',
-        name: '02号桩',
+        name: '02号',
         isOffline: false,
         todayUsage: 8,
         waterLevel: 54,

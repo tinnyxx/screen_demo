@@ -11,9 +11,9 @@ import { getShanghaiDates } from './dashboard.js'
 const FILTER_LIFE_MAX_CHECKINS = 1500
 /** 每次打卡处理尿液 0.08L */
 const URINE_PER_CHECKIN_L = 0.08
-/** 粪便盒超声距离（mm）：空 ≥360，满 ≤275 */
+/** 粪便盒超声距离（mm）：空 ≥360，满 ≤290 */
 const FECES_EMPTY_MM = 360
-const FECES_FULL_MM = 275
+const FECES_FULL_MM = 290
 /** 滤芯寿命低于该百分比时产生运维报警 */
 const FILTER_ALARM_PERCENT = 20
 const FECES_ALARM_PERCENT = 80

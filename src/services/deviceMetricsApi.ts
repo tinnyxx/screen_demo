@@ -18,9 +18,9 @@ export interface DeviceMetricItem {
   soilMoisture: number | null
   /** 由打卡次数推算，1500 次后为 0 */
   filterLife: number
-  /** 粪便盒超声距离 mm（SZGXY101 板），空 ≥360，满 ≤275 */
+  /** 粪便盒超声距离 mm（SZGXY101 板），空 ≥360，满 ≤290 */
   distanceMm: number | null
-  /** 距离换算的装满百分比，360mm=0%，275mm=100% */
+  /** 距离换算的装满百分比，360mm=0%，290mm=100% */
   fecesBoxPercent: number | null
   waterout: number | null
 }

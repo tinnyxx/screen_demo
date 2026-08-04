@@ -36,24 +36,24 @@ export function SystemSelectPage() {
         <button
           type="button"
           className={styles.card}
-          onClick={() => setMode('redeem')}
-        >
-          <span className={styles.cardBadge}>核销</span>
-          <span className={styles.cardTitle}>兑换码核销系统</span>
-          <span className={styles.cardDesc}>
-            查询并核销礼品兑换码，记录核销小区
-          </span>
-        </button>
-
-        <button
-          type="button"
-          className={styles.card}
           onClick={() => setMode('monitor')}
         >
           <span className={styles.cardBadge}>监测</span>
           <span className={styles.cardTitle}>瓴界·数据监测平台</span>
           <span className={styles.cardDesc}>
             进入小区数据大屏，查看设备与运营数据
+          </span>
+        </button>
+
+        <button
+          type="button"
+          className={styles.card}
+          onClick={() => setMode('redeem')}
+        >
+          <span className={styles.cardBadge}>核销</span>
+          <span className={styles.cardTitle}>兑换码核销系统</span>
+          <span className={styles.cardDesc}>
+            查询并核销礼品兑换码，记录核销小区
           </span>
         </button>
       </div>

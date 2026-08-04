@@ -6,6 +6,6 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  title: '数字孪生监控平台',
+  title: '瓴界·数据监测平台',
   setTitle: (title) => set({ title }),
 }))

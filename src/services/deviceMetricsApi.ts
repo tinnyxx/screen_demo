@@ -6,6 +6,9 @@ import type { TaskReminderItem } from '@/mock/taskReminder'
 
 const DEVICE_METRICS_API_URL = '/api/devices/metrics'
 
+/** 临时关闭：运维任务不展示，底部「待处理事件」固定为 0 */
+export const SHOW_OPS_TASKS = false
+
 export interface DeviceMetricItem {
   id: string
   deviceNo: number
@@ -103,17 +106,19 @@ export function applyDeviceMetrics(
     }
   })
 
-  const alarmItems: TaskReminderItem[] = metrics.alarms.map((alarm) => ({
-    id: `alert-${alarm.id}`,
-    status: alarm.status,
-    deviceNo: alarm.deviceNo,
-    event: alarm.event,
-    datetime: alarm.datetime,
-  }))
+  const alarmItems: TaskReminderItem[] = SHOW_OPS_TASKS
+    ? metrics.alarms.map((alarm) => ({
+        id: `alert-${alarm.id}`,
+        status: alarm.status,
+        deviceNo: alarm.deviceNo,
+        event: alarm.event,
+        datetime: alarm.datetime,
+      }))
+    : []
 
-  const pendingCount = metrics.alarms.filter(
-    (alarm) => alarm.status === 'pending',
-  ).length
+  const pendingCount = SHOW_OPS_TASKS
+    ? metrics.alarms.filter((alarm) => alarm.status === 'pending').length
+    : 0
 
   const faultCount = devices.filter(
     (device) =>

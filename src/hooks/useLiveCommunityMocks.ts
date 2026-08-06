@@ -1,17 +1,35 @@
 import { useEffect, useState } from 'react'
 import { useCommunityMocks, useResolvedCommunityId } from '@/hooks/useActiveCommunity'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
-import { applyDeviceMetrics, fetchDeviceMetrics } from '@/services/deviceMetricsApi'
+import {
+  applyDeviceMetrics,
+  fetchDeviceMetrics,
+  SHOW_OPS_TASKS,
+} from '@/services/deviceMetricsApi'
 
 const DEVICE_METRICS_REFRESH_MS = 60 * 1000
+
+/** mock / 接口失败时也隐藏运维任务，避免短暂露出假数据 */
+function withoutOpsTasks(bundle: CommunityMockBundle): CommunityMockBundle {
+  if (SHOW_OPS_TASKS) return bundle
+  return {
+    ...bundle,
+    taskReminder: { ...bundle.taskReminder, items: [] },
+    bottomStats: bundle.bottomStats.map((item) =>
+      item.key === 'pending-events' ? { ...item, value: '0' } : item,
+    ),
+  }
+}
 
 export function useLiveCommunityMocks(): CommunityMockBundle | null {
   const communityId = useResolvedCommunityId()
   const baseMocks = useCommunityMocks()
-  const [liveMocks, setLiveMocks] = useState<CommunityMockBundle | null>(baseMocks)
+  const [liveMocks, setLiveMocks] = useState<CommunityMockBundle | null>(
+    baseMocks ? withoutOpsTasks(baseMocks) : null,
+  )
 
   useEffect(() => {
-    setLiveMocks(baseMocks)
+    setLiveMocks(baseMocks ? withoutOpsTasks(baseMocks) : null)
   }, [baseMocks])
 
   useEffect(() => {
@@ -28,7 +46,7 @@ export function useLiveCommunityMocks(): CommunityMockBundle | null {
       } catch (error) {
         console.error('获取设备运行指标失败', error)
         if (!cancelled) {
-          setLiveMocks(baseMocks)
+          setLiveMocks(withoutOpsTasks(baseMocks))
         }
       }
     }

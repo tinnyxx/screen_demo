@@ -207,7 +207,7 @@ async function fetchAllWarnEvents(eventSources) {
   }
 
   allEvents.sort((a, b) => Number(b.time ?? 0) - Number(a.time ?? 0))
-  return allEvents
+  return filterValidWarnEvents(allEvents)
 }
 
 // ---------- waterout 快照 ----------
@@ -286,29 +286,46 @@ function parseWarnValue(raw) {
   if (raw === null || raw === undefined) return null
   if (typeof raw === 'object') return raw
   if (typeof raw !== 'string') return null
+
+  const text = raw.trim()
+  if (!text) return null
+
   try {
-    return JSON.parse(raw)
+    const parsed = JSON.parse(text)
+    if (typeof parsed === 'string') {
+      try {
+        return JSON.parse(parsed)
+      } catch {
+        return null
+      }
+    }
+    return parsed && typeof parsed === 'object' ? parsed : null
   } catch {
     return null
   }
 }
 
-/** 仅取 value.warn，忽略 info 字段 */
-function warnMessage(event) {
+/** 仅取 identifier=warn 且 value.warn 非空；完全忽略 info */
+function extractWarnText(event) {
+  if (String(event?.identifier ?? 'warn') !== 'warn') return null
+
   const parsed = parseWarnValue(event.value)
-  if (parsed?.warn && String(parsed.warn).trim()) {
-    return String(parsed.warn).trim()
-  }
+  if (!parsed || typeof parsed !== 'object') return null
 
-  if (typeof event.value === 'string' && event.value.trim()) {
-    return event.value.trim()
-  }
+  const text = String(parsed.warn ?? '').trim()
+  return text || null
+}
 
-  return event.name ? `OneNET告警：${event.name}` : 'OneNET设备告警'
+function filterValidWarnEvents(events) {
+  if (!Array.isArray(events)) return []
+  return events.filter((event) => extractWarnText(event) !== null)
 }
 
 async function persistWarnEvents(deviceId, events) {
   for (const event of events) {
+    const message = extractWarnText(event)
+    if (!message) continue
+
     const key = warnEventKey(deviceId, event)
     const rawTime = Number(event.time)
     const eventTime = Number.isFinite(rawTime)
@@ -325,7 +342,7 @@ async function persistWarnEvents(deviceId, events) {
           'onenet_warn',
           'onenet_warn',
           ${key},
-          ${warnMessage(event)},
+          ${message},
           ${eventTime}::timestamptz AT TIME ZONE 'Asia/Shanghai'
         )
         ON CONFLICT (source_event_key)
@@ -336,6 +353,24 @@ async function persistWarnEvents(deviceId, events) {
       console.warn(`OneNET warn 入库失败 (${deviceId}):`, error.message)
     }
   }
+}
+
+/** 先过滤 OneNET 事件，再清空待处理 onenet_warn，最后仅写入 warn 非空的记录 */
+async function syncOnenetWarnAlerts(deviceId, rawEvents) {
+  const validEvents = filterValidWarnEvents(rawEvents)
+
+  try {
+    await sql`
+      DELETE FROM device_alerts
+      WHERE device_id = ${deviceId}
+        AND source = 'onenet_warn'
+        AND resolved_at IS NULL
+    `
+  } catch (error) {
+    console.warn(`onenet_warn 待处理清理失败 (${deviceId}):`, error.message)
+  }
+
+  await persistWarnEvents(deviceId, validEvents)
 }
 
 async function getVisibleAlerts(deviceIds) {
@@ -358,6 +393,12 @@ async function getVisibleAlerts(deviceIds) {
           CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Shanghai'
         )
       )
+      AND (source <> 'onenet_warn' OR (
+        NULLIF(TRIM(message), '') IS NOT NULL
+        AND LEFT(TRIM(message), 1) <> '{'
+        AND message NOT LIKE 'OneNET告警：%'
+        AND message NOT LIKE 'OneNET设备告警%'
+      ))
     ORDER BY (resolved_at IS NULL) DESC, created_at DESC
   `
 }
@@ -421,7 +462,7 @@ async function buildCommunityDeviceMetrics(communityId) {
         await recordWateroutSnapshot(id, waterout)
       }
 
-      await persistWarnEvents(id, warnResults[index])
+      await syncOnenetWarnAlerts(id, warnResults[index])
 
       if (filterLife < FILTER_ALARM_PERCENT) {
         await upsertDetectionAlert(

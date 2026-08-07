@@ -19,7 +19,7 @@ const FILTER_ALARM_PERCENT = 20
 const FECES_ALARM_PERCENT = 80
 
 /**
- * OneNET 双板映射：top 板读 distance/temp，esp 板读 waterout。
+ * OneNET 双板映射：top 板读 distance/temp/wet，esp 板读 waterout。
  * 同一逻辑设备任一块离线则整体离线；事件从所有关联板名合并拉取。
  */
 const ONENET_BOARD_MAP = {
@@ -61,7 +61,7 @@ function sortDevicesBySlot(devices) {
   })
 }
 
-const TOP_PROPERTY_IDENTIFIERS = ['distance', 'temp']
+const TOP_PROPERTY_IDENTIFIERS = ['distance', 'temp', 'wet']
 const ESP_PROPERTY_IDENTIFIERS = ['waterout', 'waterin']
 
 const CACHE_TTL_MS = 30 * 1000
@@ -454,6 +454,7 @@ async function buildCommunityDeviceMetrics(communityId) {
       const props = propertyResults[index]
 
       const distanceMm = toFiniteNumber(props?.distance)
+      const soilMoisture = toFiniteNumber(props?.wet)
       const waterout = toFiniteNumber(props?.waterout)
       const filterLife = computeFilterLife(counts.filterCheckins)
       const fecesBoxPercent = computeFecesBoxPercent(distanceMm)
@@ -492,7 +493,7 @@ async function buildCommunityDeviceMetrics(communityId) {
         online,
         todayUsage: counts.today,
         totalCheckins: counts.total,
-        soilMoisture: null,
+        soilMoisture,
         filterLife,
         distanceMm,
         fecesBoxPercent,

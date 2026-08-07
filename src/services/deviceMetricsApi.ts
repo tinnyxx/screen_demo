@@ -17,7 +17,7 @@ export interface DeviceMetricItem {
   online: boolean
   todayUsage: number
   totalCheckins: number
-  /** 土壤湿度，当前物模型未上报时为 null */
+  /** 土壤湿度 wet，0-100，离线或未上报为 null */
   soilMoisture: number | null
   /** 由打卡次数推算，1500 次后为 0 */
   filterLife: number

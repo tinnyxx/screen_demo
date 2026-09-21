@@ -1,5 +1,4 @@
 import { useLiveCommunityMocks } from '@/hooks/useLiveCommunityMocks'
-import { DEVICE_SLOTS } from '@/config/deviceSlots'
 import {
   getMetricColor,
   resolveDeviceStatus,
@@ -71,8 +70,6 @@ export function OperationStatusPanel() {
   const warningColor = operationStatus?.warningColor ?? ''
   const abnormalThreshold = operationStatus?.abnormalThreshold ?? 80
 
-  const displayDevices = devices.slice(0, DEVICE_SLOTS.length)
-
   if (!operationStatus || !metricColors) return null
 
   return (
@@ -89,7 +86,7 @@ export function OperationStatusPanel() {
             </tr>
           </thead>
           <tbody>
-            {displayDevices.map((device) => (
+            {devices.map((device) => (
               <DeviceRow
                 key={device.id}
                 device={device}

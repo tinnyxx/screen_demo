@@ -1,6 +1,6 @@
 import { sql } from './start.js'
 
-export const VALID_COMMUNITY_IDS = new Set(['lanwan', 'huarun'])
+export const VALID_COMMUNITY_IDS = new Set(['lanwan', 'huarun', 'shengnawei'])
 
 export function normalizeCommunityId(raw) {
   const value = String(raw ?? '').trim()

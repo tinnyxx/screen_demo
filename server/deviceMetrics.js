@@ -21,6 +21,7 @@ const FECES_ALARM_PERCENT = 80
 /**
  * OneNET 双板映射：top 板读 distance/temp/wet，esp 板读 waterout。
  * 同一逻辑设备任一块离线则整体离线；事件从所有关联板名合并拉取。
+ * 蓝湾沿用 101/ESP；圣拿威用 pet_devices.onenet_device_name（当前 01 号为 STATION_004 / SZGXY202）。
  */
 const ONENET_BOARD_MAP = {
   STATION_001: { top: 'SZGXY101', esp: 'SZGXY101ESP' },
@@ -30,23 +31,25 @@ const ONENET_BOARD_MAP = {
 /** 大屏展示顺序：01号=STATION_001，02号=STATION_002 */
 const DEVICE_SLOT_ORDER = ['STATION_001', 'STATION_002']
 
-/** 大屏槽位 → 打卡统计来源（pet_devices.id） */
+/** 蓝湾大屏槽位 → 打卡统计来源（pet_devices.id）；圣拿威不互换 */
 const CHECKIN_SOURCE_BY_SLOT = {
   STATION_001: 'STATION_002',
   STATION_002: 'STATION_001',
 }
 
-function resolveCheckinSourceId(displayDeviceId) {
+function resolveCheckinSourceId(displayDeviceId, communityId) {
+  if (communityId !== 'lanwan') return displayDeviceId
   return CHECKIN_SOURCE_BY_SLOT[displayDeviceId] ?? displayDeviceId
 }
 
-function resolveDeviceNo(deviceId, fallbackIndex) {
+function resolveDeviceNo(deviceId, fallbackIndex, communityId) {
+  if (communityId === 'shengnawei') return fallbackIndex + 1
   const slotIndex = DEVICE_SLOT_ORDER.indexOf(deviceId)
   return slotIndex >= 0 ? slotIndex + 1 : fallbackIndex + 1
 }
 
-function resolveDeviceLabel(deviceId, fallbackName) {
-  const deviceNo = resolveDeviceNo(deviceId, -1)
+function resolveDeviceLabel(deviceId, fallbackName, fallbackIndex, communityId) {
+  const deviceNo = resolveDeviceNo(deviceId, fallbackIndex, communityId)
   return deviceNo > 0 ? `${String(deviceNo).padStart(2, '0')}号` : fallbackName
 }
 
@@ -147,7 +150,16 @@ function shanghaiNowLabel() {
   return `${get('month')}/${get('day')} ${get('hour')}:${get('minute')}`
 }
 
-function resolveBoardConfig(deviceId, onenetDeviceName) {
+function resolveBoardConfig(deviceId, onenetDeviceName, communityId) {
+  if (communityId !== 'lanwan') {
+    const top = String(onenetDeviceName ?? '').trim()
+    return {
+      top: top || null,
+      esp: null,
+      eventSources: top ? [top] : [],
+    }
+  }
+
   const mapped = ONENET_BOARD_MAP[deviceId]
   if (mapped) {
     const eventSources = [mapped.top, mapped.esp].filter(Boolean)
@@ -188,6 +200,12 @@ async function fetchBoardProperties(boards, onenetByName) {
       Object.assign(result, await queryDeviceProperties(espName, ESP_PROPERTY_IDENTIFIERS))
     } catch (error) {
       console.warn(`OneNET 属性查询失败 (${espName}):`, error.message)
+    }
+  } else if (topOnline && !espName) {
+    try {
+      Object.assign(result, await queryDeviceProperties(topName, ESP_PROPERTY_IDENTIFIERS))
+    } catch (error) {
+      console.warn(`OneNET 属性查询失败 (${topName}):`, error.message)
     }
   }
 
@@ -425,7 +443,7 @@ async function buildCommunityDeviceMetrics(communityId) {
   )
 
   const boardConfigs = deviceRows.map((row) =>
-    resolveBoardConfig(String(row.id), row.onenet_device_name),
+    resolveBoardConfig(String(row.id), row.onenet_device_name, communityId),
   )
 
   const propertyResults = await Promise.all(
@@ -445,7 +463,7 @@ async function buildCommunityDeviceMetrics(communityId) {
       const boards = boardConfigs[index]
       const primaryOnenetName = boards.top || boards.esp || null
       const online = isLogicalDeviceOnline(boards, onenetByName)
-      const checkinSourceId = resolveCheckinSourceId(id)
+      const checkinSourceId = resolveCheckinSourceId(id, communityId)
       const counts = checkinCounts.get(checkinSourceId) ?? {
         total: 0,
         today: 0,
@@ -487,8 +505,8 @@ async function buildCommunityDeviceMetrics(communityId) {
 
       return {
         id,
-        deviceNo: resolveDeviceNo(id, index),
-        name: resolveDeviceLabel(id, row.name || id),
+        deviceNo: resolveDeviceNo(id, index, communityId),
+        name: resolveDeviceLabel(id, row.name || id, index, communityId),
         onenetName: primaryOnenetName,
         online,
         todayUsage: counts.today,

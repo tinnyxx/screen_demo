@@ -2,10 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { ParticleBackground } from '@/components/effects/ParticleBackground/ParticleBackground'
 import {
   CHECKOUT_USERNAME,
-  communities,
   getBoundCommunityId,
   getCommunityConfig,
+  isCommunityId,
   isSuperAdmin,
+  visibleCommunities,
   type CommunityId,
 } from '@/config/communities'
 import {
@@ -51,7 +52,7 @@ function statusClassName(status: string) {
 
 function communityLabel(communityId: string | null | undefined) {
   if (!communityId) return '-'
-  if (communityId === 'lanwan' || communityId === 'huarun') {
+  if (isCommunityId(communityId)) {
     return getCommunityConfig(communityId).name
   }
   return communityId
@@ -256,7 +257,7 @@ export function RedeemVerifyPage() {
                   required
                 >
                   <option value="">请选择小区</option>
-                  {communities.map((community) => (
+                  {visibleCommunities.map((community) => (
                     <option key={community.id} value={community.id}>
                       {community.name}
                     </option>
@@ -367,7 +368,7 @@ export function RedeemVerifyPage() {
                   }
                 >
                   <option value="all">全部小区</option>
-                  {communities.map((community) => (
+                  {visibleCommunities.map((community) => (
                     <option key={community.id} value={community.id}>
                       {community.name}
                     </option>

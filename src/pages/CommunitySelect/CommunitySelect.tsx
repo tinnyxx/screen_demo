@@ -1,6 +1,6 @@
 import { ParticleBackground } from '@/components/effects/ParticleBackground/ParticleBackground'
 import {
-  communities,
+  visibleCommunities,
   type CommunityId,
 } from '@/config/communities'
 import { useAppModeStore } from '@/stores/appModeStore'
@@ -52,7 +52,7 @@ export function CommunitySelectPage() {
       </header>
 
       <div className={styles.grid}>
-        {communities.map((community) => (
+        {visibleCommunities.map((community) => (
           <button
             key={community.id}
             type="button"

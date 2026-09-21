@@ -49,7 +49,7 @@ const lanwanMocks: CommunityMockBundle = {
       year: 2026,
       month: 5,
       city: '深圳',
-      communityName: '蓝湾小区',
+      communityName: '广兴源 · 蓝湾',
     },
     items: [
       {
@@ -287,20 +287,18 @@ const lanwanMocks: CommunityMockBundle = {
   },
 }
 
-const huarunMocks: CommunityMockBundle = {
+const shengnaweiMocks: CommunityMockBundle = {
   headerInfo: {
     weatherCity: '深圳',
     weather: {
       temperature: 27,
       description: '多云',
     },
-    managerName: '华润管理员',
+    managerName: '圣拿威管理员',
   },
   mapDevices: {
     markers: [
       { id: '1', label: '01号', left: 50, top: 48, offsetX: 120, offsetY: 90 },
-      { id: '2', label: '02号', left: 50, top: 48, offsetX: -80, offsetY: 40 },
-      { id: '3', label: '03号', left: 50, top: 48, offsetX: 40, offsetY: -30 },
     ],
   },
   monthlyReport: {
@@ -308,7 +306,7 @@ const huarunMocks: CommunityMockBundle = {
       year: 2026,
       month: 5,
       city: '深圳',
-      communityName: '华润小区',
+      communityName: '圣拿威 · 湾美花园',
     },
     items: [
       {
@@ -416,7 +414,7 @@ const huarunMocks: CommunityMockBundle = {
   ],
   equipmentStatus: {
     runningLabel: '运行设备',
-    runningCount: 3,
+    runningCount: 1,
     legend: [
       {
         key: 'online',
@@ -424,7 +422,7 @@ const huarunMocks: CommunityMockBundle = {
         color: '#4FF0DD',
         gradientFrom: '#9DE0F5',
         gradientTo: '#4FF0DD',
-        count: 3,
+        count: 1,
       },
       {
         key: 'offline',
@@ -432,7 +430,7 @@ const huarunMocks: CommunityMockBundle = {
         color: '#ECB12F',
         gradientFrom: '#FEEB9F',
         gradientTo: '#ECB12F',
-        count: 1,
+        count: 0,
       },
       {
         key: 'fault',
@@ -459,15 +457,6 @@ const huarunMocks: CommunityMockBundle = {
         waterLevel: 61,
         filterLife: 68,
         fecesBox: 42,
-      },
-      {
-        id: '2',
-        name: '02号',
-        isOffline: false,
-        todayUsage: 8,
-        waterLevel: 54,
-        filterLife: 45,
-        fecesBox: 67,
       },
     ],
   },
@@ -532,7 +521,62 @@ const huarunMocks: CommunityMockBundle = {
   },
 }
 
+const huarunMocks: CommunityMockBundle = {
+  ...shengnaweiMocks,
+  headerInfo: {
+    ...shengnaweiMocks.headerInfo,
+    managerName: '华润管理员',
+  },
+  mapDevices: {
+    markers: [
+      { id: '1', label: '01号', left: 50, top: 48, offsetX: 120, offsetY: 90 },
+      { id: '2', label: '02号', left: 50, top: 48, offsetX: -80, offsetY: 40 },
+      { id: '3', label: '03号', left: 50, top: 48, offsetX: 40, offsetY: -30 },
+    ],
+  },
+  monthlyReport: {
+    ...shengnaweiMocks.monthlyReport,
+    meta: {
+      ...shengnaweiMocks.monthlyReport.meta,
+      communityName: '华润小区',
+    },
+  },
+  equipmentStatus: {
+    ...shengnaweiMocks.equipmentStatus,
+    runningCount: 3,
+    legend: shengnaweiMocks.equipmentStatus.legend.map((item) => {
+      if (item.key === 'online') return { ...item, count: 3 }
+      if (item.key === 'offline') return { ...item, count: 1 }
+      return item
+    }),
+  },
+  operationStatus: {
+    ...shengnaweiMocks.operationStatus,
+    devices: [
+      {
+        id: '1',
+        name: '01号',
+        isOffline: false,
+        todayUsage: 10,
+        waterLevel: 61,
+        filterLife: 68,
+        fecesBox: 42,
+      },
+      {
+        id: '2',
+        name: '02号',
+        isOffline: false,
+        todayUsage: 8,
+        waterLevel: 54,
+        filterLife: 45,
+        fecesBox: 67,
+      },
+    ],
+  },
+}
+
 export const communityMocks: Record<CommunityId, CommunityMockBundle> = {
   lanwan: lanwanMocks,
   huarun: huarunMocks,
+  shengnawei: shengnaweiMocks,
 }

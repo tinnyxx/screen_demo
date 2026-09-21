@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS user_pets (
 -- ============================================
 CREATE TABLE IF NOT EXISTS communities (
     id              SERIAL PRIMARY KEY,
-    code            VARCHAR(32) UNIQUE NOT NULL,         -- lanwan | huarun（大屏 communityId）
+    code            VARCHAR(32) UNIQUE NOT NULL,         -- lanwan | huarun | shengnawei
     name            VARCHAR(100) NOT NULL,
     latitude        NUMERIC(12,8),
     longitude       NUMERIC(12,8),
@@ -56,8 +56,11 @@ CREATE TABLE IF NOT EXISTS communities (
 INSERT INTO communities (id, code, name, latitude, longitude, radius_m)
 VALUES
   (1, 'huarun', '华润小区', 22.74837300, 113.91219700, 100),
-  (2, 'lanwan', '蓝湾小区', 22.55759400, 113.86765200, 100)
+  (2, 'lanwan', '广兴源 · 蓝湾', 22.55759400, 113.86765200, 100),
+  (3, 'shengnawei', '圣拿威 · 湾美花园', 22.74837300, 113.91219700, 100)
 ON CONFLICT (code) DO NOTHING;
+
+SELECT setval('communities_id_seq', (SELECT MAX(id) FROM communities));
 
 -- ============================================
 -- 4. 打卡桩设备表
@@ -150,7 +153,7 @@ CREATE TABLE redeem_codes (
     assigned_user_id INTEGER REFERENCES users(id),
     assigned_at      TIMESTAMP,
     used_at          TIMESTAMP,                         -- 核销时间
-    community_id     VARCHAR(32),                       -- 核销小区：lanwan | huarun
+    community_id     VARCHAR(32),                       -- 核销小区：lanwan | huarun | shengnawei
     redeem_record_id INTEGER REFERENCES redeem_records(id),
     created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -186,4 +189,8 @@ ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO admin_tb (username, nickname, password)
 VALUES ('admin_huarun', '华润管理员', '123456')
+ON CONFLICT (username) DO NOTHING;
+
+INSERT INTO admin_tb (username, nickname, password)
+VALUES ('admin_shengnawei', '圣拿威管理员', '123456')
 ON CONFLICT (username) DO NOTHING;

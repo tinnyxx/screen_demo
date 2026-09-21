@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { DEVICE_SLOTS } from '@/config/deviceSlots'
+import { DEVICE_SLOTS, formatDeviceNoLabel } from '@/config/deviceSlots'
 import type { CommunityMockBundle } from '@/mock/communityMocks'
 import { resolveDeviceStatus } from '@/mock/equipmentOperation'
 import type { TaskReminderItem } from '@/mock/taskReminder'
@@ -21,7 +21,7 @@ export interface DeviceMetricItem {
   soilMoisture: number | null
   /** 由打卡次数推算，1500 次后为 0 */
   filterLife: number
-  /** 粪便盒超声距离 mm（SZGXY101 板），空 ≥360，满 ≤290 */
+  /** 粪便盒超声距离 mm（top 板），空 ≥360，满 ≤290 */
   distanceMm: number | null
   /** 距离换算的装满百分比，360mm=0%，290mm=100% */
   fecesBoxPercent: number | null
@@ -77,34 +77,25 @@ export function applyDeviceMetrics(
 ): CommunityMockBundle {
   const mockDevices = bundle.operationStatus.devices
 
-  const devices = DEVICE_SLOTS.map((slot, index) => {
-    const device = metrics.devices.find((item) => item.id === slot.id)
-    const mockRow = mockDevices[index]
-
-    if (!device) {
-      return mockRow
-        ? { ...mockRow, name: slot.label }
-        : {
-            id: slot.id,
-            name: slot.label,
-            isOffline: true,
-            todayUsage: 0,
-            waterLevel: 0,
-            filterLife: 0,
-            fecesBox: 0,
+  const devices =
+    metrics.devices.length > 0
+      ? metrics.devices.map((device, index) => {
+          const slot = DEVICE_SLOTS.find((item) => item.id === device.id)
+          const mockRow = mockDevices[index]
+          return {
+            id: device.id,
+            name: slot?.label ?? device.name ?? formatDeviceNoLabel(device.deviceNo || index + 1),
+            isOffline: !device.online,
+            todayUsage: device.todayUsage,
+            waterLevel: device.soilMoisture ?? mockRow?.waterLevel ?? 0,
+            filterLife: device.filterLife,
+            fecesBox: device.fecesBoxPercent ?? mockRow?.fecesBox ?? 0,
           }
-    }
-
-    return {
-      id: device.id,
-      name: slot.label,
-      isOffline: !device.online,
-      todayUsage: device.todayUsage,
-      waterLevel: device.soilMoisture ?? mockRow?.waterLevel ?? 0,
-      filterLife: device.filterLife,
-      fecesBox: device.fecesBoxPercent ?? mockRow?.fecesBox ?? 0,
-    }
-  })
+        })
+      : mockDevices.map((mockRow, index) => ({
+          ...mockRow,
+          name: mockRow.name || formatDeviceNoLabel(index + 1),
+        }))
 
   const alarmItems: TaskReminderItem[] = SHOW_OPS_TASKS
     ? metrics.alarms.map((alarm) => ({

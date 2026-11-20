@@ -36,7 +36,7 @@ export const communities: CommunityConfig[] = [
     name: '华润 · 润府',
     projectName: '华润 · 润府',
     background: huarunBackground,
-    backgroundScale: DEFAULT_BACKGROUND_SCALE / 1.3,
+    backgroundScale: DEFAULT_BACKGROUND_SCALE,
     adminUsername: 'admin_huarun',
   },
   {

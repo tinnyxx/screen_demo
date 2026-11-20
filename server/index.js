@@ -274,7 +274,7 @@ app.post('/api/redeem/verify', async (req, res) => {
   }
 
   if (!communityId) {
-    return res.status(400).json({ message: '请指定核销小区（lanwan / shengnawei）' })
+    return res.status(400).json({ message: '请指定核销小区（lanwan / huarun / shengnawei）' })
   }
 
   try {

@@ -12,9 +12,7 @@ interface CommunityState {
 function loadStoredCommunityId(): CommunityId | null {
   try {
     const raw = localStorage.getItem(COMMUNITY_STORAGE_KEY)
-    if (raw === 'lanwan' || raw === 'shengnawei') return raw
-    // 华润已从选择页隐藏：旧缓存切到圣拿威
-    if (raw === 'huarun') return 'shengnawei'
+    if (raw === 'lanwan' || raw === 'huarun' || raw === 'shengnawei') return raw
     return null
   } catch {
     return null

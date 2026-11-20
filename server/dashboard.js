@@ -2,6 +2,18 @@ import { sql } from './start.js'
 
 export const VALID_COMMUNITY_IDS = new Set(['lanwan', 'huarun', 'shengnawei'])
 
+/** 大屏只展示这些设备；未列出的小区展示全部启用设备 */
+const DISPLAY_DEVICE_IDS = {
+  huarun: ['STATION_006'],
+}
+
+export function filterDisplayedDeviceIds(communityId, deviceIds) {
+  const allow = DISPLAY_DEVICE_IDS[communityId]
+  if (!allow) return deviceIds
+  const allowSet = new Set(allow)
+  return deviceIds.filter((id) => allowSet.has(String(id)))
+}
+
 export function normalizeCommunityId(raw) {
   const value = String(raw ?? '').trim()
   return VALID_COMMUNITY_IDS.has(value) ? value : null
@@ -26,7 +38,10 @@ async function getCommunityDeviceIds(communityId) {
       AND COALESCE(d.is_active, TRUE) = TRUE
   `
 
-  return rows.map((row) => String(row.id))
+  return filterDisplayedDeviceIds(
+    communityId,
+    rows.map((row) => String(row.id)),
+  )
 }
 
 function fillHourlyCounts(rows) {

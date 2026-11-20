@@ -4,7 +4,7 @@
 
 -- 1. 若之前误把华润改名为圣拿威，这里改回来
 UPDATE communities
-SET name = '华润小区'
+SET name = '华润 · 润府'
 WHERE code = 'huarun';
 
 UPDATE admin_tb

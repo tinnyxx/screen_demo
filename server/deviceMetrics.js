@@ -5,7 +5,7 @@ import {
   queryAllDeviceEventLogs,
   queryDeviceProperties,
 } from './onenet.js'
-import { getShanghaiDates } from './dashboard.js'
+import { filterDisplayedDeviceIds, getShanghaiDates } from './dashboard.js'
 
 /** 滤芯寿命：1500 次打卡后为 0% */
 const FILTER_LIFE_MAX_CHECKINS = 1500
@@ -21,7 +21,8 @@ const FECES_ALARM_PERCENT = 80
 /**
  * OneNET 双板映射：top 板读 distance/temp/wet，esp 板读 waterout。
  * 同一逻辑设备任一块离线则整体离线；事件从所有关联板名合并拉取。
- * 蓝湾沿用 101/ESP；圣拿威用 pet_devices.onenet_device_name（当前 01 号为 STATION_004 / SZGXY202）。
+ * 蓝湾沿用 101/ESP。圣拿威、华润用 pet_devices.onenet_device_name
+ * （圣拿威 01 号 STATION_004 / SZGXY202，华润 01 号 STATION_006 / SZCR101）。
  */
 const ONENET_BOARD_MAP = {
   STATION_001: { top: 'SZGXY101', esp: 'SZGXY101ESP' },
@@ -43,7 +44,7 @@ function resolveCheckinSourceId(displayDeviceId, communityId) {
 }
 
 function resolveDeviceNo(deviceId, fallbackIndex, communityId) {
-  if (communityId === 'shengnawei') return fallbackIndex + 1
+  if (communityId !== 'lanwan') return fallbackIndex + 1
   const slotIndex = DEVICE_SLOT_ORDER.indexOf(deviceId)
   return slotIndex >= 0 ? slotIndex + 1 : fallbackIndex + 1
 }
@@ -72,7 +73,7 @@ const CACHE_TTL_MS = 30 * 1000
 const SNAPSHOT_MIN_INTERVAL_MS = 10 * 60 * 1000
 
 async function getCommunityDevices(communityId) {
-  return communityId
+  const rows = communityId
     ? await sql`
         SELECT d.id, d.name, d.onenet_device_name, d.filter_replaced_at
         FROM pet_devices d
@@ -88,6 +89,14 @@ async function getCommunityDevices(communityId) {
         WHERE COALESCE(d.is_active, TRUE) = TRUE
         ORDER BY d.id
       `
+
+  const visibleIds = new Set(
+    filterDisplayedDeviceIds(
+      communityId,
+      rows.map((row) => String(row.id)),
+    ),
+  )
+  return rows.filter((row) => visibleIds.has(String(row.id)))
 }
 
 async function getPerDeviceCheckinCounts(deviceIds, todayText) {

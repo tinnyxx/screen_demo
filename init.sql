@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS communities (
 
 INSERT INTO communities (id, code, name, latitude, longitude, radius_m)
 VALUES
-  (1, 'huarun', '华润小区', 22.74837300, 113.91219700, 100),
+  (1, 'huarun', '华润 · 润府', 22.74837300, 113.91219700, 100),
   (2, 'lanwan', '广兴源 · 蓝湾', 22.55759400, 113.86765200, 100),
   (3, 'shengnawei', '圣拿威 · 湾美花园', 22.74837300, 113.91219700, 100)
 ON CONFLICT (code) DO NOTHING;
@@ -78,6 +78,15 @@ CREATE TABLE IF NOT EXISTS pet_devices (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pet_devices_community ON pet_devices(community_id);
+
+INSERT INTO pet_devices (
+  id, name, latitude, longitude, radius_m, is_active, onenet_device_name, community_id
+)
+SELECT
+  'STATION_006', '01号', c.latitude, c.longitude, c.radius_m, TRUE, 'SZCR101', c.id
+FROM communities c
+WHERE c.code = 'huarun'
+ON CONFLICT (id) DO NOTHING;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON pet_devices TO myapp;
 

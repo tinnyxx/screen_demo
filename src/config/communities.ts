@@ -1,5 +1,6 @@
 import lanwanBackground from '@/assets/lanwan_background.png'
 import huarunBackground from '@/assets/huarun_background.png'
+import shengnaweiBackground from '@/assets/shengnawei_background.png'
 
 export const COMMUNITY_IDS = ['lanwan', 'huarun', 'shengnawei'] as const
 export type CommunityId = (typeof COMMUNITY_IDS)[number]
@@ -32,18 +33,17 @@ export const communities: CommunityConfig[] = [
   },
   {
     id: 'huarun',
-    name: '华润小区',
-    projectName: '华润小区',
+    name: '华润 · 润府',
+    projectName: '华润 · 润府',
     background: huarunBackground,
     backgroundScale: DEFAULT_BACKGROUND_SCALE / 1.3,
     adminUsername: 'admin_huarun',
-    hidden: true,
   },
   {
     id: 'shengnawei',
     name: '圣拿威 · 湾美花园',
     projectName: '圣拿威 · 湾美花园',
-    background: huarunBackground,
+    background: shengnaweiBackground,
     backgroundScale: DEFAULT_BACKGROUND_SCALE / 1.3,
     adminUsername: 'admin_shengnawei',
   },

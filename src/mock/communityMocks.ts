@@ -529,7 +529,7 @@ const huarunMocks: CommunityMockBundle = {
   },
   mapDevices: {
     markers: [
-      { id: 'STATION_006', label: '01号', left: 42, top: 68, offsetX: 0, offsetY: 0 },
+      { id: 'STATION_006', label: '01号', left: 42, top: 68, offsetX: -100, offsetY: 0 },
     ],
   },
   monthlyReport: {
